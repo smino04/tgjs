@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#15180F">
+<title>특급전사 — 체력검정 기록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15180F; --surface:#1F241A; --surface-2:#2A3122; --line:#3A4230;
+    --ink:#EAE7DA; --ink-dim:#9DA088; --ink-faint:#6E7259;
+    --field:#8CA05B; --field-deep:#5E7038;
+    --gold:#D8B24A; --gold-deep:#A8842B;
+    --rust:#C06A3E;
+    --display:'Oswald',sans-serif;
+    --mono:'Space Mono',ui-monospace,monospace;
+    --body:system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--body);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+    min-height:100vh; padding:0 0 48px;
+  }
+  .wrap{max-width:520px; margin:0 auto; padding:0 18px}
+
+  /* ---- header / crest ---- */
+  header{padding:26px 0 18px; text-align:center}
+  .brand{
+    font-family:var(--display); font-weight:700; letter-spacing:.14em;
+    font-size:30px; text-transform:uppercase; margin:0;
+  }
+  .brand small{display:block; font-size:11px; letter-spacing:.42em; color:var(--ink-faint); font-weight:500; margin-top:4px}
+  .crest{
+    margin:18px auto 0; max-width:340px; border:1px solid var(--line);
+    background:var(--surface); border-radius:14px; padding:16px 18px;
+    display:flex; align-items:center; gap:14px; transition:border-color .4s, background .4s;
+  }
+  .crest .badge{
+    flex:0 0 auto; width:52px; height:52px; border-radius:50%;
+    border:2px solid var(--line); display:grid; place-items:center;
+    font-family:var(--display); font-weight:700; font-size:13px; letter-spacing:.05em;
+    color:var(--ink-dim); text-transform:uppercase; transition:all .4s;
+  }
+  .crest .status-label{font-family:var(--display); text-transform:uppercase; letter-spacing:.08em; font-size:19px; line-height:1.15}
+  .crest .status-sub{font-size:12px; color:var(--ink-dim); font-family:var(--mono)}
+  .crest.is-teukup{border-color:var(--gold-deep); background:linear-gradient(180deg,rgba(216,178,74,.10),rgba(216,178,74,.02))}
+  .crest.is-teukup .badge{border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 4px rgba(216,178,74,.10)}
+  .crest.is-teukup .status-label{color:var(--gold)}
+  @keyframes stamp{0%{transform:scale(1.5) rotate(-8deg);opacity:0}60%{transform:scale(.95) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+  .crest.is-teukup .badge{animation:stamp .45s ease-out}
+
+  /* ---- section labels ---- */
+  .eyebrow{
+    font-family:var(--display); text-transform:uppercase; letter-spacing:.22em;
+    font-size:12px; color:var(--ink-faint); margin:26px 0 10px; font-weight:600;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::after{content:""; flex:1; height:1px; background:var(--line)}
+
+  /* ---- standard selector ---- */
+  .segmented{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:4px}
+  .segmented button{
+    flex:1; background:none; border:0; color:var(--ink-dim); padding:9px 6px; cursor:pointer;
+    font-family:var(--mono); font-size:13px; border-radius:7px; transition:.15s;
+  }
+  .segmented button[aria-pressed="true"]{background:var(--surface-2); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
+
+  /* ---- input card ---- */
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px}
+  .field-row{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line)}
+  .field-row:last-of-type{border-bottom:0}
+  .field-row .name{font-family:var(--display); text-transform:uppercase; letter-spacing:.06em; font-size:16px}
+  .field-row .target{font-size:11px; color:var(--ink-faint); font-family:var(--mono); margin-top:2px}
+  .field-input{display:flex; align-items:center; gap:6px}
+  .field-input input{
+    width:78px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
+    font-family:var(--mono); font-size:20px; font-weight:700; text-align:center;
+    border-radius:9px; padding:9px 4px; -moz-appearance:textfield;
+  }
+  .field-input input::-webkit-outer-spin-button,.field-input input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .field-input input:focus-visible{outline:2px solid var(--field); outline-offset:1px; border-color:var(--field)}
+  .field-input .unit{font-family:var(--mono); font-size:13px; color:var(--ink-dim)}
+  .field-input .colon{font-family:var(--mono); font-size:20px; color:var(--ink-dim)}
+
+  /* ---- gauge (signature) ---- */
+  .gauge{margin-top:9px; height:7px; background:var(--bg); border-radius:6px; overflow:hidden; border:1px solid var(--line)}
+  .gauge > i{display:block; height:100%; width:0; background:var(--field); border-radius:6px; transition:width .5s ease, background .3s}
+  .gauge.done > i{background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
+  .gap{font-family:var(--mono); font-size:12px; margin-top:6px; color:var(--ink-dim)}
+  .gap.done{color:var(--gold)}
+  .gap.empty{color:var(--ink-faint)}
+
+  /* ---- actions ---- */
+  .row-actions{display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:14px}
+  .btn{
+    font-family:var(--display); text-transform:uppercase; letter-spacing:.08em; font-size:15px;
+    border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
+    padding:13px; border-radius:11px; cursor:pointer; transition:.15s; font-weight:600;
+  }
+  .btn:hover{border-color:var(--field)}
+  .btn:focus-visible{outline:2px solid var(--field); outline-offset:2px}
+  .btn-primary{background:var(--field-deep); border-color:var(--field-deep); color:#fff}
+  .btn-primary:hover{background:var(--field); border-color:var(--field)}
+  .btn-ghost{background:none; color:var(--ink-dim)}
+  .date-input{
+    background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
+    font-family:var(--mono); font-size:13px; border-radius:9px; padding:0 10px;
+  }
+
+  /* ---- history ---- */
+  .empty{
+    text-align:center; color:var(--ink-faint); font-family:var(--mono); font-size:13px;
+    border:1px dashed var(--line); border-radius:12px; padding:28px 16px; line-height:1.7;
+  }
+  .rec{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:12px;
+  }
+  .rec.teukup{border-color:var(--gold-deep)}
+  .rec .rec-date{font-family:var(--mono); font-size:12px; color:var(--ink-dim); flex:0 0 74px}
+  .rec .rec-vals{flex:1; display:flex; gap:14px; font-family:var(--mono); font-size:13px}
+  .rec .rec-vals span b{color:var(--ink); font-weight:700}
+  .rec .rec-vals span.ok b{color:var(--gold)}
+  .rec .rec-vals small{color:var(--ink-faint); display:block; font-size:9px; letter-spacing:.1em; text-transform:uppercase}
+  .rec .rec-tag{font-family:var(--display); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint)}
+  .rec.teukup .rec-tag{color:var(--gold)}
+  .rec .del{background:none; border:0; color:var(--ink-faint); cursor:pointer; font-size:18px; line-height:1; padding:4px}
+  .rec .del:hover{color:var(--rust)}
+
+  .foot{margin-top:26px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); line-height:1.7}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 class="brand">특급전사<small>PHYSICAL FITNESS TEST</small></h1>
+    <div class="crest" id="crest">
+      <div class="badge" id="crestBadge">—</div>
+      <div>
+        <div class="status-label" id="crestLabel">기록 대기중</div>
+        <div class="status-sub" id="crestSub">종목 값을 입력하면 판정됩니다</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="eyebrow">적용 기준</div>
+  <div class="segmented" id="ageSeg" role="group" aria-label="연령 기준 선택">
+    <button data-age="u25" aria-pressed="true">만 25세 이하</button>
+    <button data-age="26to30" aria-pressed="false">만 26~30세</button>
+  </div>
+
+  <div class="eyebrow">기록 입력</div>
+  <div class="card">
+    <div class="field-row">
+      <div>
+        <div class="name">팔굽혀펴기</div>
+        <div class="target" data-target="push">특급 72개 · 2분</div>
+      </div>
+      <div class="field-input">
+        <input id="push" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="팔굽혀펴기 개수">
+        <span class="unit">개</span>
+      </div>
+    </div>
+    <div class="gauge" id="g_push"><i></i></div>
+    <div class="gap empty" id="gap_push">값을 입력하세요</div>
+
+    <div class="field-row" style="margin-top:6px">
+      <div>
+        <div class="name">윗몸일으키기</div>
+        <div class="target" data-target="sit">특급 86개 · 2분</div>
+      </div>
+      <div class="field-input">
+        <input id="sit" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="윗몸일으키기 개수">
+        <span class="unit">개</span>
+      </div>
+    </div>
+    <div class="gauge" id="g_sit"><i></i></div>
+    <div class="gap empty" id="gap_sit">값을 입력하세요</div>
+
+    <div class="field-row" style="margin-top:6px">
+      <div>
+        <div class="name">3km 달리기</div>
+        <div class="target" data-target="run">특급 12:30 이내</div>
+      </div>
+      <div class="field-input">
+        <input id="runMin" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="달리기 분">
+        <span class="colon">:</span>
+        <input id="runSec" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="달리기 초">
+      </div>
+    </div>
+    <div class="gauge" id="g_run"><i></i></div>
+    <div class="gap empty" id="gap_run">값을 입력하세요</div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" id="saveBtn">이 기록 저장</button>
+      <input class="date-input" id="recDate" type="date" aria-label="측정일">
+    </div>
+    <button class="btn btn-ghost" id="clearBtn" style="width:100%; margin-top:8px; border:0">입력 지우기</button>
+  </div>
+
+  <div class="eyebrow">기록 히스토리</div>
+  <div id="history"></div>
+
+  <p class="foot">
+    기준 · 남군 육군 체력검정 특급 (교차윗몸 / 인클라인 팔굽)<br>
+    26~30세는 팔굽·윗몸 -2개, 3km +15초 완화 적용<br>
+    기록은 이 기기에만 저장됩니다 · v0.1
+  </p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1";
+
+  // 남군 육군 특급 기준 (연령대별)
+  var STD={
+    u25:   {push:72, sit:86, run:750, label:"만 25세 이하"},   // 12:30
+    "26to30":{push:70, sit:84, run:765, label:"만 26~30세"}    // 12:45
+  };
+  var age = localStorage.getItem(AGEKEY) || "u25";
+
+  var $=function(id){return document.getElementById(id)};
+  var records=load();
+
+  function load(){ try{return JSON.parse(localStorage.getItem(STORE))||[]}catch(e){return[]} }
+  function save(){ localStorage.setItem(STORE, JSON.stringify(records)) }
+  function fmtRun(s){ if(s==null||isNaN(s))return "—"; var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
+  function clamp(n){ return Math.max(0, Math.min(1, n)); }
+
+  // ---- read current inputs ----
+  function current(){
+    var push=parseInt($("push").value,10);
+    var sit=parseInt($("sit").value,10);
+    var mm=parseInt($("runMin").value,10), ss=parseInt($("runSec").value,10);
+    var run=(isNaN(mm)&&isNaN(ss))?NaN:((isNaN(mm)?0:mm)*60+(isNaN(ss)?0:ss));
+    return {push:isNaN(push)?NaN:push, sit:isNaN(sit)?NaN:sit, run:run};
+  }
+
+  // ---- evaluate one event ----
+  function evalReps(val, std){ // higher is better
+    if(isNaN(val)) return {done:false, has:false, fill:0, gapText:"값을 입력하세요"};
+    var done=val>=std;
+    return {done:done, has:true, fill:clamp(val/std),
+      gapText: done ? "특급 달성 (+"+(val-std)+"개)" : "특급까지 "+(std-val)+"개"};
+  }
+  function evalRun(val, std){ // lower is better
+    if(isNaN(val)) return {done:false, has:false, fill:0, gapText:"값을 입력하세요"};
+    var done=val<=std;
+    return {done:done, has:true, fill:clamp(std/val),
+      gapText: done ? "특급 달성 (-"+fmtRun(std-val)+")" : "특급까지 -"+fmtRun(val-std)};
+  }
+
+  // ---- paint gauges + crest for current input ----
+  function refresh(){
+    var s=STD[age], c=current();
+    var e={ push:evalReps(c.push,s.push), sit:evalReps(c.sit,s.sit), run:evalRun(c.run,s.run) };
+    ["push","sit","run"].forEach(function(k){
+      var g=$("g_"+k), gap=$("gap_"+k);
+      g.querySelector("i").style.width=(e[k].fill*100)+"%";
+      g.classList.toggle("done", e[k].done);
+      gap.textContent=e[k].gapText;
+      gap.className="gap"+(e[k].done?" done":(e[k].has?"":" empty"));
+    });
+    // crest reflects current input only if all three entered
+    var allIn=e.push.has&&e.sit.has&&e.run.has;
+    var cnt=(e.push.done?1:0)+(e.sit.done?1:0)+(e.run.done?1:0);
+    setCrest(allIn, cnt);
+  }
+
+  function setCrest(allIn, cnt){
+    var crest=$("crest"), badge=$("crestBadge"), label=$("crestLabel"), sub=$("crestSub");
+    if(!allIn){
+      crest.classList.remove("is-teukup"); badge.textContent="—";
+      label.textContent="기록 대기중"; sub.textContent="세 종목 값을 모두 입력하면 판정됩니다";
+      return;
+    }
+    if(cnt===3){
+      crest.classList.remove("is-teukup"); void crest.offsetWidth; // restart stamp
+      crest.classList.add("is-teukup"); badge.textContent="특급";
+      label.textContent="특급전사 달성"; sub.textContent="3개 종목 전부 특급";
+    }else{
+      crest.classList.remove("is-teukup"); badge.textContent=cnt+"/3";
+      label.textContent="특급 "+cnt+"개 종목"; sub.textContent="세 종목 모두 특급이면 특급전사";
+    }
+  }
+
+  // ---- update the printed standard targets ----
+  function paintTargets(){
+    var s=STD[age];
+    document.querySelector('[data-target="push"]').textContent="특급 "+s.push+"개 · 2분";
+    document.querySelector('[data-target="sit"]').textContent="특급 "+s.sit+"개 · 2분";
+    document.querySelector('[data-target="run"]').textContent="특급 "+fmtRun(s.run)+" 이내";
+  }
+
+  // ---- history render ----
+  function renderHistory(){
+    var box=$("history");
+    if(!records.length){
+      box.innerHTML='<div class="empty">아직 기록이 없습니다.<br>첫 체력검정 기록을 남겨보세요.</div>';
+      return;
+    }
+    var sorted=records.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"")||b.id-a.id});
+    box.innerHTML=sorted.map(function(r){
+      var s=STD[r.age]||STD.u25;
+      var okP=r.push>=s.push, okS=r.sit>=s.sit, okR=r.run<=s.run;
+      var teukup=okP&&okS&&okR;
+      return '<div class="rec'+(teukup?' teukup':'')+'">'
+        +'<div class="rec-date">'+(r.date||"")+'</div>'
+        +'<div class="rec-vals">'
+          +'<span class="'+(okP?'ok':'')+'"><small>팔굽</small><b>'+r.push+'</b></span>'
+          +'<span class="'+(okS?'ok':'')+'"><small>윗몸</small><b>'+r.sit+'</b></span>'
+          +'<span class="'+(okR?'ok':'')+'"><small>3km</small><b>'+fmtRun(r.run)+'</b></span>'
+        +'</div>'
+        +'<div class="rec-tag">'+(teukup?'특급':'—')+'</div>'
+        +'<button class="del" data-id="'+r.id+'" aria-label="기록 삭제">×</button>'
+      +'</div>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
+      b.addEventListener("click", function(){
+        var id=parseInt(b.getAttribute("data-id"),10);
+        records=records.filter(function(x){return x.id!==id}); save(); renderHistory();
+      });
+    });
+  }
+
+  // ---- save current ----
+  function saveRecord(){
+    var c=current();
+    if(isNaN(c.push)||isNaN(c.sit)||isNaN(c.run)){
+      alert("세 종목 값을 모두 입력해야 저장됩니다."); return;
+    }
+    records.push({id:Date.now(), date:$("recDate").value||new Date().toISOString().slice(0,10),
+      push:c.push, sit:c.sit, run:c.run, age:age});
+    save(); renderHistory();
+    ["push","sit","runMin","runSec"].forEach(function(k){$(k).value=""});
+    refresh();
+  }
+
+  // ---- wire up ----
+  ["push","sit","runMin","runSec"].forEach(function(k){ $(k).addEventListener("input", refresh); });
+  $("saveBtn").addEventListener("click", saveRecord);
+  $("clearBtn").addEventListener("click", function(){
+    ["push","sit","runMin","runSec"].forEach(function(k){$(k).value=""}); refresh();
+  });
+  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      age=b.getAttribute("data-age"); localStorage.setItem(AGEKEY, age);
+      Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      paintTargets(); refresh();
+    });
+  });
+
+  // ---- init ----
+  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", x.getAttribute("data-age")===age?"true":"false");
+  });
+  $("recDate").value=new Date().toISOString().slice(0,10);
+  paintTargets(); refresh(); renderHistory();
+})();
+</script>
+</body>
+</html>
