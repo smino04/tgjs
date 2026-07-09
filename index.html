@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#15180F">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7">
 <title>특급전사 — 체력검정 기록</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -14,130 +14,149 @@
 <link rel="manifest" href="manifest.json">
 <style>
   :root{
-    --bg:#15180F; --surface:#1F241A; --surface-2:#2A3122; --line:#3A4230;
-    --ink:#EAE7DA; --ink-dim:#9DA088; --ink-faint:#6E7259;
-    --field:#8CA05B; --field-deep:#5E7038;
-    --gold:#D8B24A; --gold-deep:#A8842B;
-    --rust:#C06A3E;
-    --display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Apple SD Gothic Neo',system-ui,sans-serif;
-    --mono:-apple-system,BlinkMacSystemFont,'SF Pro Text','Apple SD Gothic Neo',system-ui,sans-serif;
-    --body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Apple SD Gothic Neo',system-ui,sans-serif;
+    --bg:#F2F2F7; --surface:#FFFFFF; --line:#E3E3E8;
+    --ink:#1C1C1E; --ink-dim:#6E6E73; --ink-faint:#AEAEB2;
+    --tint:#007AFF; --tint-bg:rgba(0,122,255,.12);
+    --gold:#B8860B; --gold-bg:rgba(184,134,11,.12);
+    --green:#34C759; --danger:#FF3B30;
+    --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Apple SD Gothic Neo',system-ui,sans-serif;
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#000000; --surface:#1C1C1E; --line:#333336;
+    --ink:#FFFFFF; --ink-dim:#98989D; --ink-faint:#68686D;
+    --tint:#0A84FF; --tint-bg:rgba(10,132,255,.16);
+    --gold:#E8C05A; --gold-bg:rgba(232,192,90,.14);
+    --green:#30D158; --danger:#FF453A;
+    color-scheme:dark;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
-    background:var(--bg); color:var(--ink); font-family:var(--body);
-    line-height:1.5; -webkit-font-smoothing:antialiased;
-    min-height:100vh; padding:0 0 116px;
+    background:var(--bg); color:var(--ink); font-family:var(--font);
+    line-height:1.45; -webkit-font-smoothing:antialiased;
+    min-height:100vh; padding:0 0 118px;
+    transition:background-color .35s ease, color .35s ease;
   }
   .wrap{max-width:520px; margin:0 auto; padding:0 18px}
 
-  /* ---- header / crest ---- */
-  header{padding:26px 0 18px; text-align:center}
-  .brand{
-    font-family:var(--display); font-weight:800; letter-spacing:.01em;
-    font-size:28px; margin:0;
-  }
-  .brand small{display:block; font-size:11px; letter-spacing:.28em; color:var(--ink-faint); font-weight:600; margin-top:6px; text-transform:uppercase}
-  .crest{
-    margin:18px auto 0; max-width:340px; border:1px solid var(--line);
-    background:var(--surface); border-radius:16px; padding:16px 18px;
-    display:flex; align-items:center; gap:14px; transition:border-color .4s, background .4s;
-  }
-  .crest .badge{
-    flex:0 0 auto; width:52px; height:52px; border-radius:50%;
-    border:2px solid var(--line); display:grid; place-items:center;
-    font-family:var(--display); font-weight:800; font-size:13px; letter-spacing:.02em;
-    color:var(--ink-dim); transition:all .4s;
-  }
-  .crest .status-label{font-family:var(--display); font-weight:700; font-size:18px; line-height:1.3}
-  .crest .status-sub{font-size:12px; color:var(--ink-dim)}
-  .crest.is-teukup{border-color:var(--gold-deep); background:linear-gradient(180deg,rgba(216,178,74,.10),rgba(216,178,74,.02))}
-  .crest.is-teukup .badge{border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 4px rgba(216,178,74,.10)}
-  .crest.is-teukup .status-label{color:var(--gold)}
-  @keyframes stamp{0%{transform:scale(1.5) rotate(-8deg);opacity:0}60%{transform:scale(.95) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
-  .crest.is-teukup .badge{animation:stamp .45s ease-out}
+  .page-header{padding:20px 2px 6px}
+  .page-header h1{font-size:34px; font-weight:800; letter-spacing:-.02em; margin:0}
 
-  /* ---- section labels ---- */
-  .eyebrow{
-    font-family:var(--display); letter-spacing:.02em;
-    font-size:13px; color:var(--ink-faint); margin:26px 0 10px; font-weight:700;
-    display:flex; align-items:center; gap:10px;
+  .group-label{
+    font-size:13px; font-weight:600; color:var(--ink-faint);
+    margin:26px 4px 8px; letter-spacing:.01em;
   }
-  .eyebrow::after{content:""; flex:1; height:1px; background:var(--line)}
 
-  /* ---- standard selector ---- */
-  .segmented{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:4px}
+  /* ---- exercise cards (기록 tab) ---- */
+  .ex-card{
+    width:100%; display:flex; align-items:center; gap:14px; text-align:left;
+    background:var(--surface); border:1px solid var(--line); border-radius:18px;
+    padding:14px 16px; margin-bottom:12px; cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+    transition:background-color .3s, border-color .3s, transform .15s;
+    font-family:inherit; color:inherit;
+  }
+  .ex-card:active{transform:scale(.97)}
+  .ex-icon{
+    flex:0 0 auto; width:46px; height:46px; border-radius:13px;
+    display:grid; place-items:center; background:var(--tint-bg); color:var(--tint);
+  }
+  .ex-icon svg{width:24px; height:24px}
+  .ex-body{flex:1; min-width:0}
+  .ex-name{font-size:16px; font-weight:700}
+  .ex-meta{font-size:13px; color:var(--ink-dim); margin-top:2px}
+  .ex-meta.ok{color:var(--gold); font-weight:600}
+  .ex-chev{color:var(--ink-faint); font-size:18px; flex:0 0 auto}
+
+  /* ---- ios grouped list ---- */
+  .group{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; transition:background-color .3s, border-color .3s}
+  .row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 16px; border-bottom:1px solid var(--line); min-height:22px;
+  }
+  .row:last-child{border-bottom:0}
+  .row .row-label{font-size:15px}
+  .row .row-desc{font-size:12px; color:var(--ink-faint); margin-top:2px}
+  .row.danger{cursor:pointer}
+  .row.danger .row-label{color:var(--danger); font-weight:600}
+
+  /* ---- toggle switch ---- */
+  .switch{position:relative; width:51px; height:31px; flex:0 0 auto}
+  .switch input{position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; z-index:1}
+  .switch .track{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background-color .25s}
+  .switch .track::after{
+    content:""; position:absolute; top:2px; left:2px; width:27px; height:27px;
+    background:#fff; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,.3); transition:transform .25s;
+  }
+  .switch input:checked + .track{background:var(--green)}
+  .switch input:checked + .track::after{transform:translateX(20px)}
+
+  /* ---- segmented ---- */
+  .segmented{display:flex; gap:3px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:3px}
   .segmented button{
-    flex:1; background:none; border:0; color:var(--ink-dim); padding:9px 6px; cursor:pointer;
-    font-family:var(--body); font-size:13px; font-weight:600; border-radius:9px; transition:.15s;
+    flex:1; background:none; border:0; color:var(--ink-dim); padding:8px 6px; cursor:pointer;
+    font-family:inherit; font-size:13px; font-weight:600; border-radius:8px; transition:.15s;
   }
-  .segmented button[aria-pressed="true"]{background:var(--surface-2); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
+  .segmented button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.15)}
 
-  /* ---- input card ---- */
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px}
-  .field-row{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line)}
-  .field-row:last-of-type{border-bottom:0}
-  .field-row .name{font-family:var(--display); font-weight:700; font-size:16px}
-  .field-row .target{font-size:11px; color:var(--ink-faint); margin-top:2px; font-variant-numeric:tabular-nums}
-  .field-input{display:flex; align-items:center; gap:6px}
+  .foot{margin-top:22px; padding:0 4px; font-size:12px; color:var(--ink-faint); line-height:1.8}
+
+  /* ---- screens (tab content) ---- */
+  .screen{display:none}
+  .screen.active{display:block; animation:screenIn .32s cubic-bezier(.22,1,.36,1)}
+  @keyframes screenIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+
+  /* ---- detail overlay (ios push navigation) ---- */
+  .detail{
+    position:fixed; inset:0; z-index:800; background:var(--bg);
+    transform:translateX(100%); transition:transform .38s cubic-bezier(.32,.72,0,1);
+    display:flex; flex-direction:column; visibility:hidden;
+  }
+  .detail.open{transform:translateX(0); visibility:visible}
+  .detail-nav{
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:calc(env(safe-area-inset-top) + 8px) 6px 10px; border-bottom:1px solid var(--line);
+    background:var(--surface); transition:background-color .3s, border-color .3s;
+  }
+  .detail-back{
+    background:none; border:0; color:var(--tint); font-size:16px; font-weight:600;
+    padding:8px 10px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:2px;
+  }
+  .detail-back:active{opacity:.5}
+  .detail-title{font-size:16px; font-weight:700}
+  .detail-spacer{width:64px}
+  .detail-body{flex:1; overflow-y:auto; padding:16px 18px 40px}
+
+  .input-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; transition:background-color .3s, border-color .3s}
+  .detail-target{font-size:13px; color:var(--ink-dim); margin-bottom:12px}
+  .field-input{display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:14px}
   .field-input input{
-    width:78px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
-    font-family:var(--mono); font-size:20px; font-weight:700; text-align:center;
-    font-variant-numeric:tabular-nums;
-    border-radius:11px; padding:9px 4px; -moz-appearance:textfield;
+    width:88px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-size:24px; font-weight:700; text-align:center;
+    font-variant-numeric:tabular-nums; border-radius:12px; padding:11px 4px; -moz-appearance:textfield;
+    transition:background-color .3s, border-color .3s;
   }
   .field-input input::-webkit-outer-spin-button,.field-input input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
-  .field-input input:focus-visible{outline:2px solid var(--field); outline-offset:1px; border-color:var(--field)}
-  .field-input .unit{font-size:13px; color:var(--ink-dim)}
-  .field-input .colon{font-size:20px; color:var(--ink-dim)}
-
-  /* ---- gauge (signature) ---- */
-  .gauge{margin-top:9px; height:7px; background:var(--bg); border-radius:6px; overflow:hidden; border:1px solid var(--line)}
-  .gauge > i{display:block; height:100%; width:0; background:var(--field); border-radius:6px; transition:width .5s ease, background .3s}
-  .gauge.done > i{background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
-  .gap{font-size:12px; margin-top:6px; color:var(--ink-dim); font-variant-numeric:tabular-nums}
-  .gap.done{color:var(--gold)}
-  .gap.empty{color:var(--ink-faint)}
-
-  /* ---- actions ---- */
-  .row-actions{display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:14px}
-  .btn{
-    font-family:var(--display); letter-spacing:.01em; font-size:15px;
-    border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
-    padding:13px; border-radius:13px; cursor:pointer; transition:.15s; font-weight:700;
-  }
-  .btn:hover{border-color:var(--field)}
-  .btn:focus-visible{outline:2px solid var(--field); outline-offset:2px}
-  .btn-primary{background:var(--field-deep); border-color:var(--field-deep); color:#fff}
-  .btn-primary:hover{background:var(--field); border-color:var(--field)}
-  .btn-ghost{background:none; color:var(--ink-dim)}
+  .field-input input:focus-visible{outline:2px solid var(--tint); outline-offset:1px}
+  .field-input .unit{font-size:14px; color:var(--ink-dim)}
+  .field-input .colon{font-size:24px; color:var(--ink-dim)}
   .date-input{
-    background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
-    font-size:13px; border-radius:11px; padding:0 10px; font-variant-numeric:tabular-nums;
+    width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
+    font-size:13px; border-radius:10px; padding:9px 10px; margin-bottom:12px;
+    font-variant-numeric:tabular-nums; font-family:inherit; transition:background-color .3s, border-color .3s;
   }
+  .btn{
+    width:100%; font-family:inherit; font-size:16px; font-weight:700;
+    border:0; background:var(--tint); color:#fff; padding:14px; border-radius:13px; cursor:pointer;
+    transition:opacity .15s, transform .15s;
+  }
+  .btn:active{transform:scale(.98); opacity:.85}
 
-  /* ---- history ---- */
-  .empty{
-    text-align:center; color:var(--ink-faint); font-size:13px;
-    border:1px dashed var(--line); border-radius:14px; padding:28px 16px; line-height:1.7;
-  }
-  .rec{
-    background:var(--surface); border:1px solid var(--line); border-radius:14px;
-    padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:12px;
-  }
-  .rec.teukup{border-color:var(--gold-deep)}
-  .rec .rec-date{font-size:12px; color:var(--ink-dim); flex:0 0 74px; font-variant-numeric:tabular-nums}
-  .rec .rec-vals{flex:1; display:flex; gap:14px; font-size:13px; font-variant-numeric:tabular-nums}
-  .rec .rec-vals span b{color:var(--ink); font-weight:700}
-  .rec .rec-vals span.ok b{color:var(--gold)}
-  .rec .rec-vals small{color:var(--ink-faint); display:block; font-size:9px; letter-spacing:.06em; text-transform:uppercase}
-  .rec .rec-tag{font-family:var(--display); font-size:11px; letter-spacing:.02em; color:var(--ink-faint); font-weight:700}
-  .rec.teukup .rec-tag{color:var(--gold)}
-  .rec .del{background:none; border:0; color:var(--ink-faint); cursor:pointer; font-size:18px; line-height:1; padding:4px}
-  .rec .del:hover{color:var(--rust)}
-
-  .foot{margin-top:26px; text-align:center; font-size:12px; color:var(--ink-faint); line-height:1.8}
+  .graph-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; transition:background-color .3s, border-color .3s}
+  .graph-card svg{width:100%; height:auto; display:block}
+  .graph-empty{text-align:center; color:var(--ink-faint); font-size:13px; padding:30px 10px}
+  .graph-dates{display:flex; justify-content:space-between; font-size:11px; color:var(--ink-faint); margin-top:4px; font-variant-numeric:tabular-nums}
 
   @media (prefers-reduced-motion:reduce){
     *:not(#splash):not(#splash *){animation:none!important; transition:none!important}
@@ -164,36 +183,25 @@
   @keyframes splash-fade-in{0%{opacity:0}100%{opacity:1}}
   @keyframes splash-fade-out{0%{opacity:1}100%{opacity:0}}
 
-  /* ---- tab panels ---- */
-  .tab-panel{display:none}
-  .tab-panel.active{display:block}
-
-  /* ---- settings ---- */
-  .settings-row{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    background:var(--surface); border:1px solid var(--line); border-radius:14px;
-    padding:14px 16px; margin-bottom:10px;
-  }
-  .settings-row .label{font-family:var(--display); font-weight:700; font-size:15px}
-  .settings-row .desc{font-size:12px; color:var(--ink-faint); margin-top:2px}
-  .btn-danger{background:none; border:1px solid var(--rust); color:var(--rust); font-weight:700; white-space:nowrap; padding:10px 16px}
-  .btn-danger:hover{background:rgba(192,106,62,.12)}
-
   /* ---- glass tab bar ---- */
   .tabbar{
     position:fixed; left:50%; bottom:max(18px, env(safe-area-inset-bottom)); transform:translateX(-50%);
     display:flex; gap:2px; padding:8px; border-radius:26px; z-index:500;
-    background:rgba(31,36,26,.6); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%);
-    border:1px solid rgba(255,255,255,.09); box-shadow:0 10px 34px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+    background:rgba(255,255,255,.68); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%);
+    border:1px solid rgba(0,0,0,.06); box-shadow:0 10px 34px rgba(0,0,0,.16);
+    transition:background-color .3s, border-color .3s;
+  }
+  :root[data-theme="dark"] .tabbar{
+    background:rgba(28,28,30,.68); border-color:rgba(255,255,255,.08); box-shadow:0 10px 34px rgba(0,0,0,.5);
   }
   .tabbar button{
     display:flex; flex-direction:column; align-items:center; gap:3px;
     background:none; border:0; color:var(--ink-faint); cursor:pointer;
-    padding:9px 22px; border-radius:19px; transition:.2s;
-    font-family:var(--body); font-size:10.5px; font-weight:600;
+    padding:9px 30px; border-radius:19px; transition:.2s;
+    font-family:inherit; font-size:10.5px; font-weight:600;
   }
   .tabbar button svg{width:22px; height:22px; display:block}
-  .tabbar button.active{color:var(--gold); background:rgba(216,178,74,.14)}
+  .tabbar button.active{color:var(--tint); background:var(--tint-bg)}
   .tabbar button:active{transform:scale(.94)}
 </style>
 </head>
@@ -201,110 +209,80 @@
 <div id="splash"><img src="splash-star.png" alt="특급전사"></div>
 <div class="wrap">
 
-  <header>
-    <h1 class="brand">특급전사<small>PHYSICAL FITNESS TEST</small></h1>
-    <div class="crest" id="crest">
-      <div class="badge" id="crestBadge">—</div>
-      <div>
-        <div class="status-label" id="crestLabel">기록 대기중</div>
-        <div class="status-sub" id="crestSub">종목 값을 입력하면 판정됩니다</div>
-      </div>
-    </div>
-  </header>
+  <!-- ============ 기록 화면 ============ -->
+  <section class="screen active" id="screen-record">
+    <div class="page-header"><h1>기록</h1></div>
+    <div id="exCards"></div>
+  </section>
 
-  <!-- ============ 기록 탭 ============ -->
-  <section class="tab-panel active" id="panel-record">
-    <div class="eyebrow">적용 기준</div>
+  <!-- ============ 설정 화면 ============ -->
+  <section class="screen" id="screen-settings">
+    <div class="page-header"><h1>설정</h1></div>
+
+    <div class="group-label">적용 기준</div>
     <div class="segmented" id="ageSeg" role="group" aria-label="연령 기준 선택">
       <button data-age="u25" aria-pressed="true">만 25세 이하</button>
       <button data-age="26to30" aria-pressed="false">만 26~30세</button>
     </div>
 
-    <div class="eyebrow">기록 입력</div>
-    <div class="card">
-      <div class="field-row">
-        <div>
-          <div class="name">팔굽혀펴기</div>
-          <div class="target" data-target="push">특급 72개 · 2분</div>
-        </div>
-        <div class="field-input">
-          <input id="push" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="팔굽혀펴기 개수">
-          <span class="unit">개</span>
-        </div>
+    <div class="group-label">화면</div>
+    <div class="group">
+      <div class="row">
+        <span class="row-label">다크 모드</span>
+        <label class="switch">
+          <input type="checkbox" id="darkToggle" aria-label="다크 모드">
+          <span class="track"></span>
+        </label>
       </div>
-      <div class="gauge" id="g_push"><i></i></div>
-      <div class="gap empty" id="gap_push">값을 입력하세요</div>
-
-      <div class="field-row" style="margin-top:6px">
-        <div>
-          <div class="name">윗몸일으키기</div>
-          <div class="target" data-target="sit">특급 86개 · 2분</div>
-        </div>
-        <div class="field-input">
-          <input id="sit" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="윗몸일으키기 개수">
-          <span class="unit">개</span>
-        </div>
-      </div>
-      <div class="gauge" id="g_sit"><i></i></div>
-      <div class="gap empty" id="gap_sit">값을 입력하세요</div>
-
-      <div class="field-row" style="margin-top:6px">
-        <div>
-          <div class="name">3km 달리기</div>
-          <div class="target" data-target="run">특급 12:30 이내</div>
-        </div>
-        <div class="field-input">
-          <input id="runMin" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="달리기 분">
-          <span class="colon">:</span>
-          <input id="runSec" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="달리기 초">
-        </div>
-      </div>
-      <div class="gauge" id="g_run"><i></i></div>
-      <div class="gap empty" id="gap_run">값을 입력하세요</div>
-
-      <div class="row-actions">
-        <button class="btn btn-primary" id="saveBtn">이 기록 저장</button>
-        <input class="date-input" id="recDate" type="date" aria-label="측정일">
-      </div>
-      <button class="btn btn-ghost" id="clearBtn" style="width:100%; margin-top:8px; border:0">입력 지우기</button>
-    </div>
-  </section>
-
-  <!-- ============ 추적 탭 ============ -->
-  <section class="tab-panel" id="panel-track">
-    <div class="eyebrow">기록 히스토리</div>
-    <div id="history"></div>
-  </section>
-
-  <!-- ============ 설정 탭 ============ -->
-  <section class="tab-panel" id="panel-settings">
-    <div class="eyebrow">데이터</div>
-    <div class="settings-row">
-      <div>
-        <div class="label">전체 기록 삭제</div>
-        <div class="desc">저장된 모든 측정 기록을 이 기기에서 삭제합니다</div>
-      </div>
-      <button class="btn btn-danger" id="wipeBtn">삭제</button>
     </div>
 
-    <div class="eyebrow">기준 안내</div>
-    <p class="foot" style="margin-top:0; text-align:left">
+    <div class="group-label">데이터</div>
+    <div class="group">
+      <div class="row danger" id="wipeBtn">
+        <div>
+          <div class="row-label">전체 기록 삭제</div>
+          <div class="row-desc">저장된 모든 측정 기록을 이 기기에서 삭제합니다</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">
       기준 · 남군 육군 체력검정 특급 (교차윗몸 / 인클라인 팔굽)<br>
       26~30세는 팔굽·윗몸 -2개, 3km +15초 완화 적용<br>
-      기록은 이 기기에만 저장됩니다 · v0.2
+      기록은 이 기기에만 저장됩니다 · v0.3
     </p>
   </section>
 
+</div>
+
+<!-- ============ 종목 상세 (슬라이드 화면) ============ -->
+<div class="detail" id="detail">
+  <div class="detail-nav">
+    <button class="detail-back" id="detailBack">‹ 기록</button>
+    <div class="detail-title" id="detailTitle">팔굽혀펴기</div>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="input-card">
+      <div class="detail-target" id="detailTarget"></div>
+      <input class="date-input" id="detailDate" type="date" aria-label="측정일">
+      <div class="field-input" id="detailInputWrap"></div>
+      <button class="btn" id="detailSaveBtn">오늘 기록 저장</button>
+    </div>
+
+    <div class="group-label">추이</div>
+    <div class="graph-card">
+      <svg id="detailGraph" viewBox="0 0 300 150" preserveAspectRatio="none" style="display:none"></svg>
+      <div class="graph-dates" id="graphDates" style="display:none"></div>
+      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
+    </div>
+  </div>
 </div>
 
 <nav class="tabbar" id="tabbar" role="tablist" aria-label="화면 전환">
   <button data-tab="record" class="active" role="tab" aria-selected="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H18a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 17.5v-12Z"/><path d="M8 3v15"/><path d="M11 8h5"/><path d="M11 11.5h5"/></svg>
     기록
-  </button>
-  <button data-tab="track" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M4 19h16"/></svg>
-    추적
   </button>
   <button data-tab="settings" role="tab" aria-selected="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.16.51.5.94 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06Z"/></svg>
@@ -315,159 +293,209 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", THEMEKEY="teukup_theme_v1", TABKEY="teukup_tab_v2";
 
   // 남군 육군 특급 기준 (연령대별)
   var STD={
-    u25:   {push:72, sit:86, run:750, label:"만 25세 이하"},   // 12:30
-    "26to30":{push:70, sit:84, run:765, label:"만 26~30세"}    // 12:45
+    u25:      {push:72, sit:86, run:750},   // 12:30
+    "26to30": {push:70, sit:84, run:765}    // 12:45
   };
+
+  var EXES={
+    push:{name:"팔굽혀펴기", unit:"개", isTime:false,
+      icon:'<circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="8" x2="9" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/>'},
+    sit:{name:"윗몸일으키기", unit:"개", isTime:false,
+      icon:'<path d="M12 3c-1 2.5-3.2 3.2-3.2 6.2a3.2 3.2 0 0 0 6.4 0c0-.8-.4-1.6-.8-2.4.8 0 1.6.8 1.6 3.2a4 4 0 0 1-8 0c0-4 2.4-4.8 4-7Z"/><path d="M9 15v3l-2 3M15 15v3l2 3M12 15v6"/>'},
+    run:{name:"3km 달리기", unit:"", isTime:true,
+      icon:'<circle cx="14.5" cy="4.5" r="1.8"/><path d="M9 20l1.5-4.5-2-2 1.2-4L13 8l1.5 2.5 3 1M9.5 13.5L7 15l-2 4"/>'}
+  };
+
   var age = localStorage.getItem(AGEKEY) || "u25";
+  var records = load();
+  var currentDetailKey = null;
 
   var $=function(id){return document.getElementById(id)};
-  var records=load();
-
   function load(){ try{return JSON.parse(localStorage.getItem(STORE))||[]}catch(e){return[]} }
-  function save(){ localStorage.setItem(STORE, JSON.stringify(records)) }
+  function persist(){ localStorage.setItem(STORE, JSON.stringify(records)) }
   function fmtRun(s){ if(s==null||isNaN(s))return "—"; var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
-  function clamp(n){ return Math.max(0, Math.min(1, n)); }
+  function today(){ return new Date().toISOString().slice(0,10) }
 
-  // ---- read current inputs ----
-  function current(){
-    var push=parseInt($("push").value,10);
-    var sit=parseInt($("sit").value,10);
-    var mm=parseInt($("runMin").value,10), ss=parseInt($("runSec").value,10);
-    var run=(isNaN(mm)&&isNaN(ss))?NaN:((isNaN(mm)?0:mm)*60+(isNaN(ss)?0:ss));
-    return {push:isNaN(push)?NaN:push, sit:isNaN(sit)?NaN:sit, run:run};
+  // ---- theme ----
+  function applyTheme(t){
+    document.documentElement.setAttribute("data-theme", t);
+    $("darkToggle").checked = (t==="dark");
   }
-
-  // ---- evaluate one event ----
-  function evalReps(val, std){ // higher is better
-    if(isNaN(val)) return {done:false, has:false, fill:0, gapText:"값을 입력하세요"};
-    var done=val>=std;
-    return {done:done, has:true, fill:clamp(val/std),
-      gapText: done ? "특급 달성 (+"+(val-std)+"개)" : "특급까지 "+(std-val)+"개"};
-  }
-  function evalRun(val, std){ // lower is better
-    if(isNaN(val)) return {done:false, has:false, fill:0, gapText:"값을 입력하세요"};
-    var done=val<=std;
-    return {done:done, has:true, fill:clamp(std/val),
-      gapText: done ? "특급 달성 (-"+fmtRun(std-val)+")" : "특급까지 -"+fmtRun(val-std)};
-  }
-
-  // ---- paint gauges + crest for current input ----
-  function refresh(){
-    var s=STD[age], c=current();
-    var e={ push:evalReps(c.push,s.push), sit:evalReps(c.sit,s.sit), run:evalRun(c.run,s.run) };
-    ["push","sit","run"].forEach(function(k){
-      var g=$("g_"+k), gap=$("gap_"+k);
-      g.querySelector("i").style.width=(e[k].fill*100)+"%";
-      g.classList.toggle("done", e[k].done);
-      gap.textContent=e[k].gapText;
-      gap.className="gap"+(e[k].done?" done":(e[k].has?"":" empty"));
-    });
-    // crest reflects current input only if all three entered
-    var allIn=e.push.has&&e.sit.has&&e.run.has;
-    var cnt=(e.push.done?1:0)+(e.sit.done?1:0)+(e.run.done?1:0);
-    setCrest(allIn, cnt);
-  }
-
-  function setCrest(allIn, cnt){
-    var crest=$("crest"), badge=$("crestBadge"), label=$("crestLabel"), sub=$("crestSub");
-    if(!allIn){
-      crest.classList.remove("is-teukup"); badge.textContent="—";
-      label.textContent="기록 대기중"; sub.textContent="세 종목 값을 모두 입력하면 판정됩니다";
-      return;
-    }
-    if(cnt===3){
-      crest.classList.remove("is-teukup"); void crest.offsetWidth; // restart stamp
-      crest.classList.add("is-teukup"); badge.textContent="특급";
-      label.textContent="특급전사 달성"; sub.textContent="3개 종목 전부 특급";
-    }else{
-      crest.classList.remove("is-teukup"); badge.textContent=cnt+"/3";
-      label.textContent="특급 "+cnt+"개 종목"; sub.textContent="세 종목 모두 특급이면 특급전사";
-    }
-  }
-
-  // ---- update the printed standard targets ----
-  function paintTargets(){
-    var s=STD[age];
-    document.querySelector('[data-target="push"]').textContent="특급 "+s.push+"개 · 2분";
-    document.querySelector('[data-target="sit"]').textContent="특급 "+s.sit+"개 · 2분";
-    document.querySelector('[data-target="run"]').textContent="특급 "+fmtRun(s.run)+" 이내";
-  }
-
-  // ---- history render ----
-  function renderHistory(){
-    var box=$("history");
-    if(!records.length){
-      box.innerHTML='<div class="empty">아직 기록이 없습니다.<br>첫 체력검정 기록을 남겨보세요.</div>';
-      return;
-    }
-    var sorted=records.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"")||b.id-a.id});
-    box.innerHTML=sorted.map(function(r){
-      var s=STD[r.age]||STD.u25;
-      var okP=r.push>=s.push, okS=r.sit>=s.sit, okR=r.run<=s.run;
-      var teukup=okP&&okS&&okR;
-      return '<div class="rec'+(teukup?' teukup':'')+'">'
-        +'<div class="rec-date">'+(r.date||"")+'</div>'
-        +'<div class="rec-vals">'
-          +'<span class="'+(okP?'ok':'')+'"><small>팔굽</small><b>'+r.push+'</b></span>'
-          +'<span class="'+(okS?'ok':'')+'"><small>윗몸</small><b>'+r.sit+'</b></span>'
-          +'<span class="'+(okR?'ok':'')+'"><small>3km</small><b>'+fmtRun(r.run)+'</b></span>'
-        +'</div>'
-        +'<div class="rec-tag">'+(teukup?'특급':'—')+'</div>'
-        +'<button class="del" data-id="'+r.id+'" aria-label="기록 삭제">×</button>'
-      +'</div>';
-    }).join("");
-    Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
-      b.addEventListener("click", function(){
-        var id=parseInt(b.getAttribute("data-id"),10);
-        records=records.filter(function(x){return x.id!==id}); save(); renderHistory();
-      });
-    });
-  }
-
-  // ---- save current ----
-  function saveRecord(){
-    var c=current();
-    if(isNaN(c.push)||isNaN(c.sit)||isNaN(c.run)){
-      alert("세 종목 값을 모두 입력해야 저장됩니다."); return;
-    }
-    records.push({id:Date.now(), date:$("recDate").value||new Date().toISOString().slice(0,10),
-      push:c.push, sit:c.sit, run:c.run, age:age});
-    save(); renderHistory();
-    ["push","sit","runMin","runSec"].forEach(function(k){$(k).value=""});
-    refresh();
-  }
-
-  // ---- wire up ----
-  ["push","sit","runMin","runSec"].forEach(function(k){ $(k).addEventListener("input", refresh); });
-  $("saveBtn").addEventListener("click", saveRecord);
-  $("clearBtn").addEventListener("click", function(){
-    ["push","sit","runMin","runSec"].forEach(function(k){$(k).value=""}); refresh();
+  applyTheme(localStorage.getItem(THEMEKEY) || "light");
+  $("darkToggle").addEventListener("change", function(){
+    var t = this.checked ? "dark" : "light";
+    localStorage.setItem(THEMEKEY, t);
+    applyTheme(t);
   });
+
+  // ---- exercise cards ----
+  function latestValue(key){
+    var withVal = records.filter(function(r){ return typeof r[key]==="number"; });
+    if(!withVal.length) return null;
+    withVal.sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+    return withVal[0];
+  }
+  function passes(key, val){
+    var std = STD[age][key];
+    return key==="run" ? val<=std : val>=std;
+  }
+  function renderCards(){
+    var box=$("exCards");
+    box.innerHTML = Object.keys(EXES).map(function(key){
+      var ex=EXES[key], rec=latestValue(key);
+      var meta, ok=false;
+      if(rec){
+        var val=rec[key];
+        ok=passes(key,val);
+        meta=(ex.isTime?fmtRun(val):val+ex.unit)+" · "+(rec.date||"")+(ok?" · 특급":"");
+      }else{
+        meta="아직 기록이 없습니다";
+      }
+      return '<button class="ex-card" data-ex="'+key+'">'
+        +'<div class="ex-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ex.icon+'</svg></div>'
+        +'<div class="ex-body"><div class="ex-name">'+ex.name+'</div><div class="ex-meta'+(ok?' ok':'')+'">'+meta+'</div></div>'
+        +'<div class="ex-chev">›</div>'
+      +'</button>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".ex-card"), function(b){
+      b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
+    });
+  }
+
+  // ---- detail screen ----
+  function targetText(key){
+    var std=STD[age][key];
+    return key==="run" ? "특급 기준 "+fmtRun(std)+" 이내" : "특급 기준 "+std+"개";
+  }
+  function buildInput(key){
+    var ex=EXES[key], wrap=$("detailInputWrap");
+    if(ex.isTime){
+      wrap.innerHTML =
+        '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="분">'
+        +'<span class="colon">:</span>'
+        +'<input id="dIn2" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="초">';
+    }else{
+      wrap.innerHTML = '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="'+ex.name+' 값"><span class="unit">'+ex.unit+'</span>';
+    }
+  }
+  function readInputValue(key){
+    var ex=EXES[key];
+    if(ex.isTime){
+      var mm=parseInt($("dIn1").value,10), ss=parseInt($("dIn2").value,10);
+      if(isNaN(mm)&&isNaN(ss)) return NaN;
+      return (isNaN(mm)?0:mm)*60+(isNaN(ss)?0:ss);
+    }
+    return parseInt($("dIn1").value,10);
+  }
+
+  function openDetail(key){
+    currentDetailKey=key;
+    var ex=EXES[key];
+    $("detailTitle").textContent=ex.name;
+    $("detailTarget").textContent=targetText(key);
+    $("detailDate").value=today();
+    buildInput(key);
+    drawGraph(key);
+    $("detail").classList.add("open");
+  }
+  function closeDetail(){
+    $("detail").classList.remove("open");
+  }
+  $("detailBack").addEventListener("click", closeDetail);
+
+  $("detailSaveBtn").addEventListener("click", function(){
+    var key=currentDetailKey, val=readInputValue(key);
+    if(isNaN(val)){ alert("값을 입력해야 저장됩니다."); return; }
+    var dateStr=$("detailDate").value || today();
+    var rec = records.filter(function(r){ return r.date===dateStr; })[0];
+    if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
+    rec[key]=val; rec.age=age;
+    persist();
+    renderCards();
+    drawGraph(key);
+    buildInput(key);
+  });
+
+  // ---- graph ----
+  function drawGraph(key){
+    var ex=EXES[key];
+    var pts = records.filter(function(r){ return typeof r[key]==="number"; })
+      .sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
+    var svg=$("detailGraph"), empty=$("detailEmpty"), datesRow=$("graphDates");
+
+    if(!pts.length){
+      svg.style.display="none"; datesRow.style.display="none"; empty.style.display="block";
+      return;
+    }
+    empty.style.display="none"; svg.style.display="block"; datesRow.style.display="flex";
+
+    var target=STD[age][key];
+    var values=pts.map(function(p){ return p[key]; });
+    var lower=ex.isTime;
+    var allVals=values.concat([target]);
+    var min=Math.min.apply(null, allVals), max=Math.max.apply(null, allVals);
+    var pad=(max-min)*0.2 || Math.max(1, target*0.1);
+    min-=pad; max+=pad;
+
+    var W=300,H=150,padL=10,padR=10,padT=16,padB=16;
+    function xAt(i){ return pts.length===1 ? W/2 : padL + (i/(pts.length-1))*(W-padL-padR); }
+    function yAt(v){
+      var t=(v-min)/((max-min)||1);
+      if(lower) t=1-t;
+      return H-padB-t*(H-padT-padB);
+    }
+
+    var linePath = pts.map(function(p,i){ return (i===0?"M":"L")+xAt(i).toFixed(1)+" "+yAt(values[i]).toFixed(1); }).join(" ");
+    var targetY=yAt(target).toFixed(1);
+
+    var dots = pts.map(function(p,i){
+      var ok = lower ? values[i]<=target : values[i]>=target;
+      return '<circle cx="'+xAt(i).toFixed(1)+'" cy="'+yAt(values[i]).toFixed(1)+'" r="4" fill="'+(ok?"var(--gold)":"var(--tint)")+'"/>';
+    }).join("");
+
+    svg.innerHTML =
+      '<line x1="'+padL+'" y1="'+targetY+'" x2="'+(W-padR)+'" y2="'+targetY+'" stroke="var(--gold)" stroke-width="1.2" stroke-dasharray="4 4" opacity=".7"/>'
+      +'<path d="'+linePath+'" fill="none" stroke="var(--tint)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+      +dots;
+
+    datesRow.innerHTML = '<span>'+pts[0].date+'</span>'+(pts.length>1?'<span>'+pts[pts.length-1].date+'</span>':'');
+  }
+
+  // ---- settings: age standard ----
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(b){
     b.addEventListener("click", function(){
       age=b.getAttribute("data-age"); localStorage.setItem(AGEKEY, age);
       Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
         x.setAttribute("aria-pressed", x===b?"true":"false");
       });
-      paintTargets(); refresh();
+      renderCards();
+      if(currentDetailKey){
+        $("detailTarget").textContent=targetText(currentDetailKey);
+        drawGraph(currentDetailKey);
+      }
     });
   });
+  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", x.getAttribute("data-age")===age?"true":"false");
+  });
+
+  // ---- settings: wipe data ----
   $("wipeBtn").addEventListener("click", function(){
-    if(!records.length){ return; }
+    if(!records.length) return;
     if(confirm("저장된 모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
-      records=[]; save(); renderHistory();
+      records=[]; persist(); renderCards();
+      if(currentDetailKey) drawGraph(currentDetailKey);
     }
   });
 
   // ---- tab switching ----
-  var TABKEY="teukup_tab_v1";
   function setTab(name){
-    Array.prototype.forEach.call(document.querySelectorAll(".tab-panel"), function(p){
-      p.classList.toggle("active", p.id==="panel-"+name);
+    Array.prototype.forEach.call(document.querySelectorAll(".screen"), function(p){
+      p.classList.toggle("active", p.id==="screen-"+name);
     });
     Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
       var on=b.getAttribute("data-tab")===name;
@@ -481,11 +509,7 @@
   });
 
   // ---- init ----
-  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
-    x.setAttribute("aria-pressed", x.getAttribute("data-age")===age?"true":"false");
-  });
-  $("recDate").value=new Date().toISOString().slice(0,10);
-  paintTargets(); refresh(); renderHistory();
+  renderCards();
   setTab(localStorage.getItem(TABKEY) || "record");
 
   // ---- splash screen ----
