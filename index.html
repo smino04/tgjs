@@ -141,9 +141,20 @@
   .foot{margin-top:26px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); line-height:1.7}
 
   @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+  /* ---- splash ---- */
+  #splash{
+    position:fixed; inset:0; z-index:9999; background:#3A4225;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .45s ease;
+  }
+  #splash img{width:112px; height:112px; animation:splash-in .5s ease-out}
+  #splash.hide{opacity:0; pointer-events:none}
+  @keyframes splash-in{0%{transform:scale(.7); opacity:0}100%{transform:scale(1); opacity:1}}
 </style>
 </head>
 <body>
+<div id="splash"><img src="icon-512.png" alt="특급전사"></div>
 <div class="wrap">
 
   <header>
@@ -373,6 +384,13 @@
   });
   $("recDate").value=new Date().toISOString().slice(0,10);
   paintTargets(); refresh(); renderHistory();
+
+  // ---- splash screen ----
+  setTimeout(function(){
+    var splash=$("splash");
+    splash.classList.add("hide");
+    splash.addEventListener("transitionend", function(){ splash.remove(); }, {once:true});
+  }, 900);
 })();
 </script>
 </body>
