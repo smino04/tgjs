@@ -124,11 +124,36 @@
     padding:8px 10px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:2px;
   }
   .detail-back:active{opacity:.5}
-  .detail-title{font-size:16px; font-weight:700}
+  .detail-title-wrap{display:flex; align-items:center; gap:8px}
+  .detail-title-wrap .accent-bar{width:4px; height:17px; border-radius:2px; background:var(--tint)}
+  .detail-title{font-size:16px; font-weight:800}
   .detail-spacer{width:64px}
   .detail-body{flex:1; overflow-y:auto; padding:16px 18px 40px}
 
-  .input-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; transition:background-color .3s, border-color .3s}
+  /* ---- stat cards ---- */
+  .stat-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px}
+  .stat-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; transition:background-color .3s, border-color .3s}
+  .stat-label{font-size:12px; color:var(--ink-faint); margin-bottom:6px}
+  .stat-value{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums}
+  .stat-value .stat-unit{font-size:13px; font-weight:600; color:var(--ink-dim); margin-left:2px}
+  .stat-value.gold{color:var(--gold)}
+  .stat-value.muted{color:var(--ink-faint)}
+
+  /* ---- record CTA + collapsible input ---- */
+  .btn-record{
+    width:100%; font-family:inherit; font-size:16px; font-weight:700;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    padding:15px; border-radius:14px; cursor:pointer; margin:16px 0;
+    transition:transform .15s, background-color .3s, border-color .3s;
+  }
+  .btn-record:active{transform:scale(.98)}
+  .btn-record.on{background:var(--tint); border-color:var(--tint); color:#fff}
+  .input-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px;
+    margin-bottom:16px; transition:background-color .3s, border-color .3s;
+    animation:slideDown .28s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes slideDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)}}
   .detail-target{font-size:13px; color:var(--ink-dim); margin-bottom:12px}
   .field-input{display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:14px}
   .field-input input{
@@ -153,10 +178,27 @@
   }
   .btn:active{transform:scale(.98); opacity:.85}
 
-  .graph-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; transition:background-color .3s, border-color .3s}
-  .graph-card svg{width:100%; height:auto; display:block}
+  .graph-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 14px; transition:background-color .3s, border-color .3s}
+  .graph-card svg{width:100%; height:auto; display:block; overflow:visible}
+  .graph-card svg text{font-family:inherit; font-variant-numeric:tabular-nums}
   .graph-empty{text-align:center; color:var(--ink-faint); font-size:13px; padding:30px 10px}
-  .graph-dates{display:flex; justify-content:space-between; font-size:11px; color:var(--ink-faint); margin-top:4px; font-variant-numeric:tabular-nums}
+
+  /* ---- history list ---- */
+  .history-row{
+    display:flex; align-items:center; gap:10px; background:var(--surface);
+    border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:9px;
+    transition:background-color .3s, border-color .3s;
+  }
+  .history-date{font-size:12px; color:var(--ink-dim); flex:0 0 42px; font-variant-numeric:tabular-nums}
+  .history-main{flex:1; min-width:0; font-size:14px}
+  .history-main b{font-weight:700}
+  .history-tag{color:var(--gold); font-weight:700; font-size:12px; margin-left:4px}
+  .history-actions{flex:0 0 auto; display:flex; gap:6px}
+  .history-actions button{
+    font-family:inherit; font-size:12px; font-weight:600; border-radius:8px; padding:6px 10px;
+    border:1px solid var(--line); background:var(--bg); color:var(--ink-dim); cursor:pointer;
+  }
+  .history-actions button.del:active, .history-actions button.edit:active{opacity:.6}
 
   @media (prefers-reduced-motion:reduce){
     *:not(#splash):not(#splash *){animation:none!important; transition:none!important}
@@ -259,23 +301,37 @@
 <div class="detail" id="detail">
   <div class="detail-nav">
     <button class="detail-back" id="detailBack">‹ 기록</button>
-    <div class="detail-title" id="detailTitle">팔굽혀펴기</div>
+    <div class="detail-title-wrap"><span class="accent-bar"></span><span class="detail-title" id="detailTitle">팔굽혀펴기</span></div>
     <div class="detail-spacer"></div>
   </div>
   <div class="detail-body">
-    <div class="input-card">
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">최근 기록</div>
+        <div class="stat-value" id="statLatest">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">특급까지</div>
+        <div class="stat-value" id="statGap">—</div>
+      </div>
+    </div>
+
+    <div class="graph-card">
+      <svg id="detailGraph" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>
+      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
+    </div>
+
+    <button class="btn-record" id="toggleInputBtn">+ 기록하기</button>
+
+    <div class="input-card" id="inputCard" hidden>
       <div class="detail-target" id="detailTarget"></div>
       <input class="date-input" id="detailDate" type="date" aria-label="측정일">
       <div class="field-input" id="detailInputWrap"></div>
-      <button class="btn" id="detailSaveBtn">오늘 기록 저장</button>
+      <button class="btn" id="detailSaveBtn">기록 저장</button>
     </div>
 
-    <div class="group-label">추이</div>
-    <div class="graph-card">
-      <svg id="detailGraph" viewBox="0 0 300 150" preserveAspectRatio="none" style="display:none"></svg>
-      <div class="graph-dates" id="graphDates" style="display:none"></div>
-      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
-    </div>
+    <div class="group-label">기록 히스토리</div>
+    <div id="historyList"></div>
   </div>
 </div>
 
@@ -371,15 +427,16 @@
     var std=STD[age][key];
     return key==="run" ? "특급 기준 "+fmtRun(std)+" 이내" : "특급 기준 "+std+"개";
   }
-  function buildInput(key){
+  function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
     if(ex.isTime){
+      var mm=presetVal!=null?Math.floor(presetVal/60):"", ss=presetVal!=null?presetVal%60:"";
       wrap.innerHTML =
-        '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="분">'
+        '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="분" value="'+mm+'">'
         +'<span class="colon">:</span>'
-        +'<input id="dIn2" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="초">';
+        +'<input id="dIn2" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="초" value="'+ss+'">';
     }else{
-      wrap.innerHTML = '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="'+ex.name+' 값"><span class="unit">'+ex.unit+'</span>';
+      wrap.innerHTML = '<input id="dIn1" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="'+ex.name+' 값" value="'+(presetVal!=null?presetVal:"")+'"><span class="unit">'+ex.unit+'</span>';
     }
   }
   function readInputValue(key){
@@ -392,20 +449,45 @@
     return parseInt($("dIn1").value,10);
   }
 
+  function showInputCard(presetDate, presetVal){
+    $("detailDate").value=presetDate || today();
+    buildInput(currentDetailKey, presetVal);
+    $("inputCard").hidden=false;
+    $("toggleInputBtn").classList.add("on");
+    $("toggleInputBtn").textContent="입력 취소";
+    $("inputCard").scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+  function hideInputCard(){
+    $("inputCard").hidden=true;
+    $("toggleInputBtn").classList.remove("on");
+    $("toggleInputBtn").textContent="+ 기록하기";
+  }
+  $("toggleInputBtn").addEventListener("click", function(){
+    if($("inputCard").hidden) showInputCard(); else hideInputCard();
+  });
+
   function openDetail(key){
     currentDetailKey=key;
     var ex=EXES[key];
     $("detailTitle").textContent=ex.name;
     $("detailTarget").textContent=targetText(key);
-    $("detailDate").value=today();
-    buildInput(key);
+    hideInputCard();
+    renderStats(key);
     drawGraph(key);
+    renderHistory(key);
     $("detail").classList.add("open");
   }
   function closeDetail(){
     $("detail").classList.remove("open");
   }
   $("detailBack").addEventListener("click", closeDetail);
+
+  function refreshDetail(key){
+    renderCards();
+    renderStats(key);
+    drawGraph(key);
+    renderHistory(key);
+  }
 
   $("detailSaveBtn").addEventListener("click", function(){
     var key=currentDetailKey, val=readInputValue(key);
@@ -415,54 +497,162 @@
     if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
     rec[key]=val; rec.age=age;
     persist();
-    renderCards();
-    drawGraph(key);
-    buildInput(key);
+    hideInputCard();
+    refreshDetail(key);
   });
 
+  // ---- stats ----
+  function gapText(key, val){
+    var std=STD[age][key], ex=EXES[key];
+    if(ex.isTime){
+      var diff=std-val; // positive = under target = pass
+      return diff>=0 ? {text:"+"+fmtRun(diff), ok:true} : {text:"-"+fmtRun(-diff), ok:false};
+    }
+    var diff=val-std;
+    return diff>=0 ? {text:"+"+diff+"개", ok:true} : {text:diff+"개", ok:false};
+  }
+  function renderStats(key){
+    var ex=EXES[key], rec=latestValue(key);
+    var latestEl=$("statLatest"), gapEl=$("statGap");
+    if(!rec){
+      latestEl.textContent="—"; latestEl.className="stat-value muted";
+      gapEl.textContent="—"; gapEl.className="stat-value muted";
+      return;
+    }
+    var val=rec[key];
+    latestEl.textContent = ex.isTime ? fmtRun(val) : val+ex.unit;
+    latestEl.className="stat-value";
+    var g=gapText(key,val);
+    gapEl.textContent=g.text;
+    gapEl.className="stat-value"+(g.ok?" gold":"");
+  }
+
+  // ---- history ----
+  function renderHistory(key){
+    var ex=EXES[key];
+    var box=$("historyList");
+    var pts = records.filter(function(r){ return typeof r[key]==="number"; })
+      .sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+    if(!pts.length){
+      box.innerHTML='<div class="graph-empty">기록 히스토리가 없습니다.</div>';
+      return;
+    }
+    box.innerHTML = pts.map(function(r){
+      var val=r[key], ok=passes(key,val);
+      return '<div class="history-row">'
+        +'<div class="history-date">'+shortDate(r.date)+'</div>'
+        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+(ok?'<span class="history-tag">특급</span>':'')+'</div>'
+        +'<div class="history-actions">'
+          +'<button class="edit" data-date="'+r.date+'">수정</button>'
+          +'<button class="del" data-date="'+r.date+'">삭제</button>'
+        +'</div>'
+      +'</div>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".edit"), function(b){
+      b.addEventListener("click", function(){
+        var d=b.getAttribute("data-date");
+        var rec=records.filter(function(r){ return r.date===d; })[0];
+        if(!rec) return;
+        showInputCard(d, rec[key]);
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
+      b.addEventListener("click", function(){
+        var d=b.getAttribute("data-date");
+        if(!confirm(d+" 기록을 삭제할까요?")) return;
+        var rec=records.filter(function(r){ return r.date===d; })[0];
+        if(!rec) return;
+        delete rec[key];
+        var hasAny=["push","sit","run"].some(function(k){ return typeof rec[k]==="number"; });
+        if(!hasAny){ records=records.filter(function(r){ return r!==rec; }); }
+        persist();
+        refreshDetail(key);
+      });
+    });
+  }
+
   // ---- graph ----
+  function niceNum(range, round){
+    var exponent=Math.floor(Math.log(range)/Math.LN10);
+    var fraction=range/Math.pow(10,exponent), niceFraction;
+    if(round){
+      if(fraction<1.5) niceFraction=1;
+      else if(fraction<3) niceFraction=2;
+      else if(fraction<7) niceFraction=5;
+      else niceFraction=10;
+    }else{
+      if(fraction<=1) niceFraction=1;
+      else if(fraction<=2) niceFraction=2;
+      else if(fraction<=5) niceFraction=5;
+      else niceFraction=10;
+    }
+    return niceFraction*Math.pow(10,exponent);
+  }
+  function niceScale(min,max,maxTicks){
+    var range=niceNum(Math.max(max-min,1e-6), false);
+    var step=niceNum(range/(maxTicks-1), true);
+    var niceMin=Math.floor(min/step)*step, niceMax=Math.ceil(max/step)*step;
+    var ticks=[];
+    for(var v=niceMin; v<=niceMax+step*1e-6; v+=step) ticks.push(Math.round(v*1000)/1000);
+    return {min:niceMin, max:niceMax, ticks:ticks};
+  }
+  function shortDate(d){ return d ? d.slice(5).replace("-","/") : ""; }
+
   function drawGraph(key){
     var ex=EXES[key];
     var pts = records.filter(function(r){ return typeof r[key]==="number"; })
       .sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
-    var svg=$("detailGraph"), empty=$("detailEmpty"), datesRow=$("graphDates");
+    var svg=$("detailGraph"), empty=$("detailEmpty");
 
     if(!pts.length){
-      svg.style.display="none"; datesRow.style.display="none"; empty.style.display="block";
+      svg.style.display="none"; empty.style.display="block";
       return;
     }
-    empty.style.display="none"; svg.style.display="block"; datesRow.style.display="flex";
+    empty.style.display="none"; svg.style.display="block";
 
     var target=STD[age][key];
     var values=pts.map(function(p){ return p[key]; });
     var lower=ex.isTime;
     var allVals=values.concat([target]);
-    var min=Math.min.apply(null, allVals), max=Math.max.apply(null, allVals);
-    var pad=(max-min)*0.2 || Math.max(1, target*0.1);
-    min-=pad; max+=pad;
+    var rawMin=Math.min.apply(null, allVals), rawMax=Math.max.apply(null, allVals);
+    var scale=niceScale(rawMin, rawMax, 5);
+    var min=scale.min, max=scale.max;
 
-    var W=300,H=150,padL=10,padR=10,padT=16,padB=16;
-    function xAt(i){ return pts.length===1 ? W/2 : padL + (i/(pts.length-1))*(W-padL-padR); }
+    var W=300,H=170,padL=32,padR=10,padT=20,padB=22;
+    function xAt(i){ return pts.length===1 ? padL+(W-padL-padR)/2 : padL + (i/(pts.length-1))*(W-padL-padR); }
     function yAt(v){
       var t=(v-min)/((max-min)||1);
       if(lower) t=1-t;
       return H-padB-t*(H-padT-padB);
     }
+    function fmtTick(v){ return ex.isTime ? fmtRun(v) : (Math.round(v*10)/10); }
+
+    var grid = scale.ticks.map(function(t){
+      var y=yAt(t).toFixed(1);
+      return '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>'
+        +'<text x="'+(padL-6)+'" y="'+y+'" text-anchor="end" dominant-baseline="middle" font-size="8.5" fill="var(--ink-faint)">'+fmtTick(t)+'</text>';
+    }).join("");
 
     var linePath = pts.map(function(p,i){ return (i===0?"M":"L")+xAt(i).toFixed(1)+" "+yAt(values[i]).toFixed(1); }).join(" ");
     var targetY=yAt(target).toFixed(1);
 
-    var dots = pts.map(function(p,i){
+    var step = pts.length>6 ? Math.ceil(pts.length/6) : 1;
+    var dots="", valueLabels="", dateLabels="";
+    pts.forEach(function(p,i){
       var ok = lower ? values[i]<=target : values[i]>=target;
-      return '<circle cx="'+xAt(i).toFixed(1)+'" cy="'+yAt(values[i]).toFixed(1)+'" r="4" fill="'+(ok?"var(--gold)":"var(--tint)")+'"/>';
-    }).join("");
+      var x=xAt(i).toFixed(1), y=yAt(values[i]).toFixed(1);
+      var color = ok?"var(--gold)":"var(--tint)";
+      dots += '<circle cx="'+x+'" cy="'+y+'" r="3.6" fill="'+color+'"/>';
+      valueLabels += '<text x="'+x+'" y="'+(parseFloat(y)-8)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+color+'">'+(ex.isTime?fmtRun(values[i]):values[i])+'</text>';
+      if(i%step===0 || i===pts.length-1){
+        dateLabels += '<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" font-size="8.5" fill="var(--ink-faint)">'+shortDate(p.date)+'</text>';
+      }
+    });
 
-    svg.innerHTML =
-      '<line x1="'+padL+'" y1="'+targetY+'" x2="'+(W-padR)+'" y2="'+targetY+'" stroke="var(--gold)" stroke-width="1.2" stroke-dasharray="4 4" opacity=".7"/>'
-      +'<path d="'+linePath+'" fill="none" stroke="var(--tint)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
-      +dots;
-
-    datesRow.innerHTML = '<span>'+pts[0].date+'</span>'+(pts.length>1?'<span>'+pts[pts.length-1].date+'</span>':'');
+    svg.innerHTML = grid
+      +'<line x1="'+padL+'" y1="'+targetY+'" x2="'+(W-padR)+'" y2="'+targetY+'" stroke="var(--gold)" stroke-width="1.2" stroke-dasharray="4 4" opacity=".8"/>'
+      +'<path d="'+linePath+'" fill="none" stroke="var(--tint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+      +dots+valueLabels+dateLabels;
   }
 
   // ---- settings: age standard ----
