@@ -11,9 +11,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="특급전사">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#15180F; --surface:#1F241A; --surface-2:#2A3122; --line:#3A4230;
@@ -21,39 +18,39 @@
     --field:#8CA05B; --field-deep:#5E7038;
     --gold:#D8B24A; --gold-deep:#A8842B;
     --rust:#C06A3E;
-    --display:'Oswald',sans-serif;
-    --mono:'Space Mono',ui-monospace,monospace;
-    --body:system-ui,-apple-system,'Segoe UI',sans-serif;
+    --display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Apple SD Gothic Neo',system-ui,sans-serif;
+    --mono:-apple-system,BlinkMacSystemFont,'SF Pro Text','Apple SD Gothic Neo',system-ui,sans-serif;
+    --body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Apple SD Gothic Neo',system-ui,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
     background:var(--bg); color:var(--ink); font-family:var(--body);
     line-height:1.5; -webkit-font-smoothing:antialiased;
-    min-height:100vh; padding:0 0 48px;
+    min-height:100vh; padding:0 0 116px;
   }
   .wrap{max-width:520px; margin:0 auto; padding:0 18px}
 
   /* ---- header / crest ---- */
   header{padding:26px 0 18px; text-align:center}
   .brand{
-    font-family:var(--display); font-weight:700; letter-spacing:.14em;
-    font-size:30px; text-transform:uppercase; margin:0;
+    font-family:var(--display); font-weight:800; letter-spacing:.01em;
+    font-size:28px; margin:0;
   }
-  .brand small{display:block; font-size:11px; letter-spacing:.42em; color:var(--ink-faint); font-weight:500; margin-top:4px}
+  .brand small{display:block; font-size:11px; letter-spacing:.28em; color:var(--ink-faint); font-weight:600; margin-top:6px; text-transform:uppercase}
   .crest{
     margin:18px auto 0; max-width:340px; border:1px solid var(--line);
-    background:var(--surface); border-radius:14px; padding:16px 18px;
+    background:var(--surface); border-radius:16px; padding:16px 18px;
     display:flex; align-items:center; gap:14px; transition:border-color .4s, background .4s;
   }
   .crest .badge{
     flex:0 0 auto; width:52px; height:52px; border-radius:50%;
     border:2px solid var(--line); display:grid; place-items:center;
-    font-family:var(--display); font-weight:700; font-size:13px; letter-spacing:.05em;
-    color:var(--ink-dim); text-transform:uppercase; transition:all .4s;
+    font-family:var(--display); font-weight:800; font-size:13px; letter-spacing:.02em;
+    color:var(--ink-dim); transition:all .4s;
   }
-  .crest .status-label{font-family:var(--display); text-transform:uppercase; letter-spacing:.08em; font-size:19px; line-height:1.15}
-  .crest .status-sub{font-size:12px; color:var(--ink-dim); font-family:var(--mono)}
+  .crest .status-label{font-family:var(--display); font-weight:700; font-size:18px; line-height:1.3}
+  .crest .status-sub{font-size:12px; color:var(--ink-dim)}
   .crest.is-teukup{border-color:var(--gold-deep); background:linear-gradient(180deg,rgba(216,178,74,.10),rgba(216,178,74,.02))}
   .crest.is-teukup .badge{border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 4px rgba(216,178,74,.10)}
   .crest.is-teukup .status-label{color:var(--gold)}
@@ -62,51 +59,52 @@
 
   /* ---- section labels ---- */
   .eyebrow{
-    font-family:var(--display); text-transform:uppercase; letter-spacing:.22em;
-    font-size:12px; color:var(--ink-faint); margin:26px 0 10px; font-weight:600;
+    font-family:var(--display); letter-spacing:.02em;
+    font-size:13px; color:var(--ink-faint); margin:26px 0 10px; font-weight:700;
     display:flex; align-items:center; gap:10px;
   }
   .eyebrow::after{content:""; flex:1; height:1px; background:var(--line)}
 
   /* ---- standard selector ---- */
-  .segmented{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:4px}
+  .segmented{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:4px}
   .segmented button{
     flex:1; background:none; border:0; color:var(--ink-dim); padding:9px 6px; cursor:pointer;
-    font-family:var(--mono); font-size:13px; border-radius:7px; transition:.15s;
+    font-family:var(--body); font-size:13px; font-weight:600; border-radius:9px; transition:.15s;
   }
   .segmented button[aria-pressed="true"]{background:var(--surface-2); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
 
   /* ---- input card ---- */
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px}
   .field-row{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line)}
   .field-row:last-of-type{border-bottom:0}
-  .field-row .name{font-family:var(--display); text-transform:uppercase; letter-spacing:.06em; font-size:16px}
-  .field-row .target{font-size:11px; color:var(--ink-faint); font-family:var(--mono); margin-top:2px}
+  .field-row .name{font-family:var(--display); font-weight:700; font-size:16px}
+  .field-row .target{font-size:11px; color:var(--ink-faint); margin-top:2px; font-variant-numeric:tabular-nums}
   .field-input{display:flex; align-items:center; gap:6px}
   .field-input input{
     width:78px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
     font-family:var(--mono); font-size:20px; font-weight:700; text-align:center;
-    border-radius:9px; padding:9px 4px; -moz-appearance:textfield;
+    font-variant-numeric:tabular-nums;
+    border-radius:11px; padding:9px 4px; -moz-appearance:textfield;
   }
   .field-input input::-webkit-outer-spin-button,.field-input input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   .field-input input:focus-visible{outline:2px solid var(--field); outline-offset:1px; border-color:var(--field)}
-  .field-input .unit{font-family:var(--mono); font-size:13px; color:var(--ink-dim)}
-  .field-input .colon{font-family:var(--mono); font-size:20px; color:var(--ink-dim)}
+  .field-input .unit{font-size:13px; color:var(--ink-dim)}
+  .field-input .colon{font-size:20px; color:var(--ink-dim)}
 
   /* ---- gauge (signature) ---- */
   .gauge{margin-top:9px; height:7px; background:var(--bg); border-radius:6px; overflow:hidden; border:1px solid var(--line)}
   .gauge > i{display:block; height:100%; width:0; background:var(--field); border-radius:6px; transition:width .5s ease, background .3s}
   .gauge.done > i{background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
-  .gap{font-family:var(--mono); font-size:12px; margin-top:6px; color:var(--ink-dim)}
+  .gap{font-size:12px; margin-top:6px; color:var(--ink-dim); font-variant-numeric:tabular-nums}
   .gap.done{color:var(--gold)}
   .gap.empty{color:var(--ink-faint)}
 
   /* ---- actions ---- */
   .row-actions{display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:14px}
   .btn{
-    font-family:var(--display); text-transform:uppercase; letter-spacing:.08em; font-size:15px;
+    font-family:var(--display); letter-spacing:.01em; font-size:15px;
     border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
-    padding:13px; border-radius:11px; cursor:pointer; transition:.15s; font-weight:600;
+    padding:13px; border-radius:13px; cursor:pointer; transition:.15s; font-weight:700;
   }
   .btn:hover{border-color:var(--field)}
   .btn:focus-visible{outline:2px solid var(--field); outline-offset:2px}
@@ -115,30 +113,30 @@
   .btn-ghost{background:none; color:var(--ink-dim)}
   .date-input{
     background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
-    font-family:var(--mono); font-size:13px; border-radius:9px; padding:0 10px;
+    font-size:13px; border-radius:11px; padding:0 10px; font-variant-numeric:tabular-nums;
   }
 
   /* ---- history ---- */
   .empty{
-    text-align:center; color:var(--ink-faint); font-family:var(--mono); font-size:13px;
-    border:1px dashed var(--line); border-radius:12px; padding:28px 16px; line-height:1.7;
+    text-align:center; color:var(--ink-faint); font-size:13px;
+    border:1px dashed var(--line); border-radius:14px; padding:28px 16px; line-height:1.7;
   }
   .rec{
-    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
     padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:12px;
   }
   .rec.teukup{border-color:var(--gold-deep)}
-  .rec .rec-date{font-family:var(--mono); font-size:12px; color:var(--ink-dim); flex:0 0 74px}
-  .rec .rec-vals{flex:1; display:flex; gap:14px; font-family:var(--mono); font-size:13px}
+  .rec .rec-date{font-size:12px; color:var(--ink-dim); flex:0 0 74px; font-variant-numeric:tabular-nums}
+  .rec .rec-vals{flex:1; display:flex; gap:14px; font-size:13px; font-variant-numeric:tabular-nums}
   .rec .rec-vals span b{color:var(--ink); font-weight:700}
   .rec .rec-vals span.ok b{color:var(--gold)}
-  .rec .rec-vals small{color:var(--ink-faint); display:block; font-size:9px; letter-spacing:.1em; text-transform:uppercase}
-  .rec .rec-tag{font-family:var(--display); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint)}
+  .rec .rec-vals small{color:var(--ink-faint); display:block; font-size:9px; letter-spacing:.06em; text-transform:uppercase}
+  .rec .rec-tag{font-family:var(--display); font-size:11px; letter-spacing:.02em; color:var(--ink-faint); font-weight:700}
   .rec.teukup .rec-tag{color:var(--gold)}
   .rec .del{background:none; border:0; color:var(--ink-faint); cursor:pointer; font-size:18px; line-height:1; padding:4px}
   .rec .del:hover{color:var(--rust)}
 
-  .foot{margin-top:26px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); line-height:1.7}
+  .foot{margin-top:26px; text-align:center; font-size:12px; color:var(--ink-faint); line-height:1.8}
 
   @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 
@@ -156,6 +154,38 @@
   #splash.hide img{animation:splash-out .7s cubic-bezier(.4,0,.2,1) forwards}
   @keyframes splash-in{0%{transform:scale(.72); opacity:0}55%{transform:scale(1.04); opacity:1}100%{transform:scale(1); opacity:1}}
   @keyframes splash-out{0%{transform:scale(1); opacity:1}100%{transform:scale(1.08); opacity:0}}
+
+  /* ---- tab panels ---- */
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* ---- settings ---- */
+  .settings-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .settings-row .label{font-family:var(--display); font-weight:700; font-size:15px}
+  .settings-row .desc{font-size:12px; color:var(--ink-faint); margin-top:2px}
+  .btn-danger{background:none; border:1px solid var(--rust); color:var(--rust); font-weight:700; white-space:nowrap; padding:10px 16px}
+  .btn-danger:hover{background:rgba(192,106,62,.12)}
+
+  /* ---- glass tab bar ---- */
+  .tabbar{
+    position:fixed; left:50%; bottom:max(18px, env(safe-area-inset-bottom)); transform:translateX(-50%);
+    display:flex; gap:2px; padding:8px; border-radius:26px; z-index:500;
+    background:rgba(31,36,26,.6); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%);
+    border:1px solid rgba(255,255,255,.09); box-shadow:0 10px 34px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .tabbar button{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:0; color:var(--ink-faint); cursor:pointer;
+    padding:9px 22px; border-radius:19px; transition:.2s;
+    font-family:var(--body); font-size:10.5px; font-weight:600;
+  }
+  .tabbar button svg{width:22px; height:22px; display:block}
+  .tabbar button.active{color:var(--gold); background:rgba(216,178,74,.14)}
+  .tabbar button:active{transform:scale(.94)}
 </style>
 </head>
 <body>
@@ -173,70 +203,105 @@
     </div>
   </header>
 
-  <div class="eyebrow">적용 기준</div>
-  <div class="segmented" id="ageSeg" role="group" aria-label="연령 기준 선택">
-    <button data-age="u25" aria-pressed="true">만 25세 이하</button>
-    <button data-age="26to30" aria-pressed="false">만 26~30세</button>
-  </div>
+  <!-- ============ 기록 탭 ============ -->
+  <section class="tab-panel active" id="panel-record">
+    <div class="eyebrow">적용 기준</div>
+    <div class="segmented" id="ageSeg" role="group" aria-label="연령 기준 선택">
+      <button data-age="u25" aria-pressed="true">만 25세 이하</button>
+      <button data-age="26to30" aria-pressed="false">만 26~30세</button>
+    </div>
 
-  <div class="eyebrow">기록 입력</div>
-  <div class="card">
-    <div class="field-row">
+    <div class="eyebrow">기록 입력</div>
+    <div class="card">
+      <div class="field-row">
+        <div>
+          <div class="name">팔굽혀펴기</div>
+          <div class="target" data-target="push">특급 72개 · 2분</div>
+        </div>
+        <div class="field-input">
+          <input id="push" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="팔굽혀펴기 개수">
+          <span class="unit">개</span>
+        </div>
+      </div>
+      <div class="gauge" id="g_push"><i></i></div>
+      <div class="gap empty" id="gap_push">값을 입력하세요</div>
+
+      <div class="field-row" style="margin-top:6px">
+        <div>
+          <div class="name">윗몸일으키기</div>
+          <div class="target" data-target="sit">특급 86개 · 2분</div>
+        </div>
+        <div class="field-input">
+          <input id="sit" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="윗몸일으키기 개수">
+          <span class="unit">개</span>
+        </div>
+      </div>
+      <div class="gauge" id="g_sit"><i></i></div>
+      <div class="gap empty" id="gap_sit">값을 입력하세요</div>
+
+      <div class="field-row" style="margin-top:6px">
+        <div>
+          <div class="name">3km 달리기</div>
+          <div class="target" data-target="run">특급 12:30 이내</div>
+        </div>
+        <div class="field-input">
+          <input id="runMin" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="달리기 분">
+          <span class="colon">:</span>
+          <input id="runSec" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="달리기 초">
+        </div>
+      </div>
+      <div class="gauge" id="g_run"><i></i></div>
+      <div class="gap empty" id="gap_run">값을 입력하세요</div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" id="saveBtn">이 기록 저장</button>
+        <input class="date-input" id="recDate" type="date" aria-label="측정일">
+      </div>
+      <button class="btn btn-ghost" id="clearBtn" style="width:100%; margin-top:8px; border:0">입력 지우기</button>
+    </div>
+  </section>
+
+  <!-- ============ 추적 탭 ============ -->
+  <section class="tab-panel" id="panel-track">
+    <div class="eyebrow">기록 히스토리</div>
+    <div id="history"></div>
+  </section>
+
+  <!-- ============ 설정 탭 ============ -->
+  <section class="tab-panel" id="panel-settings">
+    <div class="eyebrow">데이터</div>
+    <div class="settings-row">
       <div>
-        <div class="name">팔굽혀펴기</div>
-        <div class="target" data-target="push">특급 72개 · 2분</div>
+        <div class="label">전체 기록 삭제</div>
+        <div class="desc">저장된 모든 측정 기록을 이 기기에서 삭제합니다</div>
       </div>
-      <div class="field-input">
-        <input id="push" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="팔굽혀펴기 개수">
-        <span class="unit">개</span>
-      </div>
+      <button class="btn btn-danger" id="wipeBtn">삭제</button>
     </div>
-    <div class="gauge" id="g_push"><i></i></div>
-    <div class="gap empty" id="gap_push">값을 입력하세요</div>
 
-    <div class="field-row" style="margin-top:6px">
-      <div>
-        <div class="name">윗몸일으키기</div>
-        <div class="target" data-target="sit">특급 86개 · 2분</div>
-      </div>
-      <div class="field-input">
-        <input id="sit" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="윗몸일으키기 개수">
-        <span class="unit">개</span>
-      </div>
-    </div>
-    <div class="gauge" id="g_sit"><i></i></div>
-    <div class="gap empty" id="gap_sit">값을 입력하세요</div>
+    <div class="eyebrow">기준 안내</div>
+    <p class="foot" style="margin-top:0; text-align:left">
+      기준 · 남군 육군 체력검정 특급 (교차윗몸 / 인클라인 팔굽)<br>
+      26~30세는 팔굽·윗몸 -2개, 3km +15초 완화 적용<br>
+      기록은 이 기기에만 저장됩니다 · v0.2
+    </p>
+  </section>
 
-    <div class="field-row" style="margin-top:6px">
-      <div>
-        <div class="name">3km 달리기</div>
-        <div class="target" data-target="run">특급 12:30 이내</div>
-      </div>
-      <div class="field-input">
-        <input id="runMin" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="달리기 분">
-        <span class="colon">:</span>
-        <input id="runSec" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="달리기 초">
-      </div>
-    </div>
-    <div class="gauge" id="g_run"><i></i></div>
-    <div class="gap empty" id="gap_run">값을 입력하세요</div>
-
-    <div class="row-actions">
-      <button class="btn btn-primary" id="saveBtn">이 기록 저장</button>
-      <input class="date-input" id="recDate" type="date" aria-label="측정일">
-    </div>
-    <button class="btn btn-ghost" id="clearBtn" style="width:100%; margin-top:8px; border:0">입력 지우기</button>
-  </div>
-
-  <div class="eyebrow">기록 히스토리</div>
-  <div id="history"></div>
-
-  <p class="foot">
-    기준 · 남군 육군 체력검정 특급 (교차윗몸 / 인클라인 팔굽)<br>
-    26~30세는 팔굽·윗몸 -2개, 3km +15초 완화 적용<br>
-    기록은 이 기기에만 저장됩니다 · v0.1
-  </p>
 </div>
+
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="화면 전환">
+  <button data-tab="record" class="active" role="tab" aria-selected="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H18a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 17.5v-12Z"/><path d="M8 3v15"/><path d="M11 8h5"/><path d="M11 11.5h5"/></svg>
+    기록
+  </button>
+  <button data-tab="track" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M4 19h16"/></svg>
+    추적
+  </button>
+  <button data-tab="settings" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.16.51.5.94 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06Z"/></svg>
+    설정
+  </button>
+</nav>
 
 <script>
 (function(){
@@ -382,6 +447,29 @@
       paintTargets(); refresh();
     });
   });
+  $("wipeBtn").addEventListener("click", function(){
+    if(!records.length){ return; }
+    if(confirm("저장된 모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
+      records=[]; save(); renderHistory();
+    }
+  });
+
+  // ---- tab switching ----
+  var TABKEY="teukup_tab_v1";
+  function setTab(name){
+    Array.prototype.forEach.call(document.querySelectorAll(".tab-panel"), function(p){
+      p.classList.toggle("active", p.id==="panel-"+name);
+    });
+    Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+      var on=b.getAttribute("data-tab")===name;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on?"true":"false");
+    });
+    localStorage.setItem(TABKEY, name);
+  }
+  Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); });
+  });
 
   // ---- init ----
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
@@ -389,6 +477,7 @@
   });
   $("recDate").value=new Date().toISOString().slice(0,10);
   paintTargets(); refresh(); renderHistory();
+  setTab(localStorage.getItem(TABKEY) || "record");
 
   // ---- splash screen ----
   setTimeout(function(){
