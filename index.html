@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="특급전사">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --bg:#15180F; --surface:#1F241A; --surface-2:#2A3122; --line:#3A4230;
@@ -138,7 +139,9 @@
 
   .foot{margin-top:26px; text-align:center; font-size:12px; color:var(--ink-faint); line-height:1.8}
 
-  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+  @media (prefers-reduced-motion:reduce){
+    *:not(#splash):not(#splash *){animation:none!important; transition:none!important}
+  }
 
   /* ---- splash ---- */
   #splash{
@@ -154,6 +157,12 @@
   #splash.hide img{animation:splash-out .7s cubic-bezier(.4,0,.2,1) forwards}
   @keyframes splash-in{0%{transform:scale(.72); opacity:0}55%{transform:scale(1.04); opacity:1}100%{transform:scale(1); opacity:1}}
   @keyframes splash-out{0%{transform:scale(1); opacity:1}100%{transform:scale(1.08); opacity:0}}
+  @media (prefers-reduced-motion:reduce){
+    #splash img{animation:splash-fade-in .5s ease!important}
+    #splash.hide img{animation:splash-fade-out .5s ease!important forwards}
+  }
+  @keyframes splash-fade-in{0%{opacity:0}100%{opacity:1}}
+  @keyframes splash-fade-out{0%{opacity:1}100%{opacity:0}}
 
   /* ---- tab panels ---- */
   .tab-panel{display:none}
@@ -485,6 +494,24 @@
     splash.classList.add("hide");
     splash.addEventListener("transitionend", function(){ splash.remove(); }, {once:true});
   }, 2600);
+})();
+
+// ---- service worker: keep the home-screen app auto-updating ----
+(function(){
+  if(!("serviceWorker" in navigator)) return;
+  var refreshed=false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(refreshed) return; refreshed=true;
+    window.location.reload();
+  });
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").then(function(reg){
+      document.addEventListener("visibilitychange", function(){
+        if(document.visibilityState==="visible") reg.update();
+      });
+      window.addEventListener("pageshow", function(){ reg.update(); });
+    });
+  });
 })();
 </script>
 </body>
