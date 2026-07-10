@@ -203,22 +203,6 @@
   .graph-empty .empty-title{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:5px}
   .graph-empty .empty-sub{font-size:13px; color:var(--ink-faint); line-height:1.6}
 
-  /* ---- history list ---- */
-  .history-row{
-    display:flex; align-items:center; gap:10px; background:var(--surface);
-    border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:9px;
-    transition:background-color .3s, border-color .3s;
-  }
-  .history-date{font-size:12px; color:var(--ink-dim); flex:0 0 42px; font-variant-numeric:tabular-nums}
-  .history-main{flex:1; min-width:0; font-size:14px}
-  .history-main b{font-weight:700}
-  .history-actions{flex:0 0 auto; display:flex; gap:6px}
-  .history-actions button{
-    font-family:inherit; font-size:12px; font-weight:600; border-radius:8px; padding:6px 10px;
-    border:1px solid var(--line); background:var(--bg); color:var(--ink-dim); cursor:pointer;
-  }
-  .history-actions button.del:active, .history-actions button.edit:active{opacity:.6}
-
   /* Note: intentionally NOT disabling animations under prefers-reduced-motion.
      Every motion in this app is a small opacity fade / <=14px slide — well
      under the threshold that accessibility guidance asks apps to remove —
@@ -285,9 +269,10 @@
   .cal-day .cal-dots span{width:5px; height:5px; border-radius:50%; background:var(--tint)}
   .cal-day .cal-dots span.gold{background:var(--gold)}
   .cal-day.selected .cal-dots span{background:#fff; opacity:.85}
+  .cal-detail-wrap{display:flex; align-items:stretch; gap:8px; margin-bottom:9px}
   .cal-detail-row{
-    width:100%; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
-    border-radius:14px; padding:12px 14px; margin-bottom:9px; transition:background-color .3s, border-color .3s, transform .15s;
+    flex:1; min-width:0; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px; transition:background-color .3s, border-color .3s, transform .15s;
     font-family:inherit; color:inherit; cursor:pointer; text-align:left;
   }
   .cal-detail-row:active{transform:scale(.98)}
@@ -296,6 +281,11 @@
   .cal-detail-row .val.prompt{color:var(--tint); font-weight:600; font-size:13px}
   .cal-detail-row.empty{border-style:dashed}
   .cal-detail-row .val{font-size:14px; font-variant-numeric:tabular-nums}
+  .cal-del-btn{
+    flex:0 0 auto; width:40px; background:var(--surface); border:1px solid var(--line); color:var(--danger);
+    border-radius:14px; font-size:18px; cursor:pointer; font-family:inherit; transition:background-color .3s, border-color .3s;
+  }
+  .cal-del-btn:active{opacity:.6}
 
   /* ---- flat bottom tab bar ---- */
   .tabbar{
@@ -459,9 +449,6 @@
         <div class="empty-sub" id="emptySub">위 칸에 오늘 기록을 입력하면<br>여기에 성장 그래프가 그려져요</div>
       </div>
     </div>
-
-    <div class="group-label">기록 히스토리</div>
-    <div id="historyList"></div>
   </div>
 </div>
 
@@ -731,19 +718,24 @@
       var val = rec ? rec[key] : undefined;
       if(typeof val==="number"){
         var gr=gradeOf(key,val);
-        return '<button type="button" class="cal-detail-row" data-ex="'+key+'">'
+        return '<div class="cal-detail-wrap">'
+          +'<button type="button" class="cal-detail-row" data-ex="'+key+'">'
+            +'<span class="emoji">'+ex.emoji+'</span>'
+            +'<span class="name">'+exName(key)+'</span>'
+            +'<span class="val">'+(ex.isTime?fmtRun(val):val+ex.unit)+'</span>'
+            +gradePill(gr)
+          +'</button>'
+          +'<button type="button" class="cal-del-btn" data-ex="'+key+'" aria-label="'+exName(key)+' 삭제">×</button>'
+        +'</div>';
+      }
+      return '<div class="cal-detail-wrap">'
+        +'<button type="button" class="cal-detail-row empty" data-ex="'+key+'">'
           +'<span class="emoji">'+ex.emoji+'</span>'
           +'<span class="name">'+exName(key)+'</span>'
-          +'<span class="val">'+(ex.isTime?fmtRun(val):val+ex.unit)+'</span>'
-          +gradePill(gr)
-        +'</button>';
-      }
-      return '<button type="button" class="cal-detail-row empty" data-ex="'+key+'">'
-        +'<span class="emoji">'+ex.emoji+'</span>'
-        +'<span class="name">'+exName(key)+'</span>'
-        +'<span class="val prompt">입력하기</span>'
-        +'<span class="ex-chev">›</span>'
-      +'</button>';
+          +'<span class="val prompt">입력하기</span>'
+          +'<span class="ex-chev">›</span>'
+        +'</button>'
+      +'</div>';
     }).join("");
 
     Array.prototype.forEach.call(box.querySelectorAll(".cal-detail-row"), function(b){
@@ -751,6 +743,15 @@
         var key=b.getAttribute("data-ex");
         var v = rec && typeof rec[key]==="number" ? rec[key] : null;
         openDetail(key, dateStr, v);
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll(".cal-del-btn"), function(b){
+      b.addEventListener("click", function(e){
+        e.stopPropagation();
+        var key=b.getAttribute("data-ex");
+        if(!confirm(shortDate(dateStr)+" "+exName(key)+" 기록을 삭제할까요?")) return;
+        deleteExerciseValue(key, dateStr);
+        renderCards();
       });
     });
   }
@@ -806,7 +807,6 @@
     fillInputCard(presetDate, presetVal);
     renderStats(key);
     drawGraph(key);
-    renderHistory(key);
     $("detail").classList.add("open");
   }
   function closeDetail(){
@@ -818,7 +818,6 @@
     renderCards();
     renderStats(key);
     drawGraph(key);
-    renderHistory(key);
   }
 
   $("detailSaveBtn").addEventListener("click", function(){
@@ -850,49 +849,14 @@
     gradeEl.className="stat-value"+(gr===1?" gold":(gr===0?" muted":""));
   }
 
-  // ---- history ----
-  function renderHistory(key){
-    var ex=EXES[key];
-    var box=$("historyList");
-    var pts = records.filter(function(r){ return typeof r[key]==="number"; })
-      .sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
-    if(!pts.length){
-      box.innerHTML='<div class="graph-empty" style="padding:16px"><div class="empty-sub">기록이 쌓이면 여기서 한눈에 확인할 수 있어요</div></div>';
-      return;
-    }
-    box.innerHTML = pts.map(function(r){
-      var val=r[key], gr=gradeOf(key,val);
-      return '<div class="history-row">'
-        +'<div class="history-date">'+shortDate(r.date)+'</div>'
-        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+' '+gradePill(gr)+'</div>'
-        +'<div class="history-actions">'
-          +'<button class="edit" data-date="'+r.date+'">수정</button>'
-          +'<button class="del" data-date="'+r.date+'">삭제</button>'
-        +'</div>'
-      +'</div>';
-    }).join("");
-    Array.prototype.forEach.call(box.querySelectorAll(".edit"), function(b){
-      b.addEventListener("click", function(){
-        var d=b.getAttribute("data-date");
-        var rec=records.filter(function(r){ return r.date===d; })[0];
-        if(!rec) return;
-        fillInputCard(d, rec[key]);
-        $("inputCard").scrollIntoView({behavior:"smooth", block:"center"});
-      });
-    });
-    Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
-      b.addEventListener("click", function(){
-        var d=b.getAttribute("data-date");
-        if(!confirm(d+" 기록을 삭제할까요?")) return;
-        var rec=records.filter(function(r){ return r.date===d; })[0];
-        if(!rec) return;
-        delete rec[key];
-        var hasAny=["push","sit","run"].some(function(k){ return typeof rec[k]==="number"; });
-        if(!hasAny){ records=records.filter(function(r){ return r!==rec; }); }
-        persist();
-        refreshDetail(key);
-      });
-    });
+  // ---- delete a single exercise's value on a given date (used from the calendar) ----
+  function deleteExerciseValue(key, dateStr){
+    var rec=records.filter(function(r){ return r.date===dateStr; })[0];
+    if(!rec) return;
+    delete rec[key];
+    var hasAny=["push","sit","run"].some(function(k){ return typeof rec[k]==="number"; });
+    if(!hasAny){ records=records.filter(function(r){ return r!==rec; }); }
+    persist();
   }
 
   // ---- graph ----
@@ -1008,7 +972,6 @@
       $("detailTarget").textContent=targetText(currentDetailKey);
       renderStats(currentDetailKey);
       drawGraph(currentDetailKey);
-      renderHistory(currentDetailKey);
     }
   }
 
