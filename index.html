@@ -261,6 +261,38 @@
   .modal-body .step-group:last-child{margin-bottom:0}
   .modal-body .step-title{font-size:13px; font-weight:700; color:var(--tint); margin-bottom:4px}
 
+  /* ---- calendar ---- */
+  .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+  .cal-nav button{
+    width:36px; height:36px; border-radius:11px; background:var(--surface); border:1px solid var(--line);
+    color:var(--tint); font-size:17px; font-weight:700; cursor:pointer; transition:background-color .3s, border-color .3s;
+  }
+  .cal-nav button:active{opacity:.6}
+  .cal-title{font-size:16px; font-weight:800}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:8px}
+  .cal-weekday{text-align:center; font-size:11px; font-weight:700; color:var(--ink-faint); padding-bottom:4px}
+  .cal-day{
+    aspect-ratio:1; border-radius:12px; background:var(--surface); border:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    font-size:13px; font-weight:600; color:var(--ink); cursor:pointer;
+    transition:background-color .3s, border-color .3s, transform .15s;
+  }
+  .cal-day:active{transform:scale(.92)}
+  .cal-day.pad{visibility:hidden; pointer-events:none}
+  .cal-day.today{border-color:var(--tint); border-width:2px}
+  .cal-day.selected{background:var(--tint); border-color:var(--tint); color:#fff}
+  .cal-day .cal-dots{display:flex; gap:2px; height:5px}
+  .cal-day .cal-dots span{width:5px; height:5px; border-radius:50%; background:var(--tint)}
+  .cal-day .cal-dots span.gold{background:var(--gold)}
+  .cal-day.selected .cal-dots span{background:#fff; opacity:.85}
+  .cal-detail-row{
+    display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px; margin-bottom:9px; transition:background-color .3s, border-color .3s;
+  }
+  .cal-detail-row .emoji{font-size:20px}
+  .cal-detail-row .name{font-size:14px; font-weight:700; flex:1}
+  .cal-detail-row .val{font-size:14px; font-variant-numeric:tabular-nums}
+
   /* ---- flat bottom tab bar ---- */
   .tabbar{
     position:fixed; left:0; right:0; bottom:0; z-index:500;
@@ -298,6 +330,22 @@
       </div>
     </div>
     <div id="exCards"></div>
+  </section>
+
+  <!-- ============ 캘린더 화면 ============ -->
+  <section class="screen" id="screen-calendar">
+    <div class="page-header"><h1>캘린더</h1></div>
+
+    <div class="cal-nav">
+      <button type="button" id="calPrev" aria-label="이전 달">‹</button>
+      <div class="cal-title" id="calTitle">2026년 7월</div>
+      <button type="button" id="calNext" aria-label="다음 달">›</button>
+    </div>
+
+    <div class="cal-grid" id="calGrid"></div>
+
+    <div class="group-label">기록 상세</div>
+    <div id="calDetail"></div>
   </section>
 
   <!-- ============ 설정 화면 ============ -->
@@ -449,6 +497,10 @@
   <button data-tab="record" class="active" role="tab" aria-selected="true">
     <span class="tab-emoji">📋</span>
     기록
+  </button>
+  <button data-tab="calendar" role="tab" aria-selected="false">
+    <span class="tab-emoji">📅</span>
+    캘린더
   </button>
   <button data-tab="settings" role="tab" aria-selected="false">
     <span class="tab-emoji">⚙️</span>
@@ -620,7 +672,84 @@
       b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
     });
     renderHomeSummary();
+    renderCalendar();
   }
+
+  // ---- calendar ----
+  var calState = (function(){
+    var now=new Date();
+    return { year:now.getFullYear(), month:now.getMonth(), selected:today() };
+  })();
+  function pad2(n){ return n<10 ? "0"+n : ""+n; }
+  function ymd(y,m,d){ return y+"-"+pad2(m+1)+"-"+pad2(d); }
+  function recordsOnDate(dateStr){ return records.filter(function(r){ return r.date===dateStr; }); }
+
+  function renderCalendar(){
+    var y=calState.year, m=calState.month;
+    $("calTitle").textContent = y+"년 "+(m+1)+"월";
+
+    var firstWeekday = new Date(y,m,1).getDay(); // 0=일
+    var daysInMonth = new Date(y,m+1,0).getDate();
+    var weekdayNames=["일","월","화","수","목","금","토"];
+
+    var cells = weekdayNames.map(function(w){ return '<div class="cal-weekday">'+w+'</div>'; }).join("");
+    for(var i=0;i<firstWeekday;i++){ cells+='<div class="cal-day pad"></div>'; }
+
+    var todayStr=today();
+    for(var d=1; d<=daysInMonth; d++){
+      var dateStr=ymd(y,m,d);
+      var rec=recordsOnDate(dateStr)[0];
+      var dots = rec ? '<div class="cal-dots">'+Object.keys(EXES).filter(function(k){ return typeof rec[k]==="number"; }).map(function(k){
+        return '<span'+(gradeOf(k, rec[k])===1?' class="gold"':'')+'></span>';
+      }).join("")+'</div>' : '';
+      var cls="cal-day"+(dateStr===todayStr?" today":"")+(dateStr===calState.selected?" selected":"");
+      cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">'+d+dots+'</button>';
+    }
+
+    $("calGrid").innerHTML = cells;
+    Array.prototype.forEach.call($("calGrid").querySelectorAll(".cal-day:not(.pad)"), function(b){
+      b.addEventListener("click", function(){
+        calState.selected = b.getAttribute("data-date");
+        renderCalendar();
+      });
+    });
+
+    renderCalDetail(calState.selected);
+  }
+
+  function renderCalDetail(dateStr){
+    var box=$("calDetail");
+    var recs=recordsOnDate(dateStr);
+    var entries=[];
+    recs.forEach(function(r){
+      Object.keys(EXES).forEach(function(k){
+        if(typeof r[k]==="number") entries.push({key:k, val:r[k]});
+      });
+    });
+    var label=dateStr===today() ? "오늘 ("+shortDate(dateStr)+")" : shortDate(dateStr);
+    if(!entries.length){
+      box.innerHTML='<div class="graph-empty" style="padding:16px"><div class="empty-sub">'+label+'에는 기록이 없어요</div></div>';
+      return;
+    }
+    box.innerHTML = '<div class="row-desc" style="margin:0 0 8px 2px">'+label+'</div>' + entries.map(function(e){
+      var ex=EXES[e.key], gr=gradeOf(e.key,e.val);
+      return '<div class="cal-detail-row">'
+        +'<span class="emoji">'+ex.emoji+'</span>'
+        +'<span class="name">'+exName(e.key)+'</span>'
+        +'<span class="val">'+(ex.isTime?fmtRun(e.val):e.val+ex.unit)+'</span>'
+        +gradePill(gr)
+      +'</div>';
+    }).join("");
+  }
+
+  $("calPrev").addEventListener("click", function(){
+    calState.month--; if(calState.month<0){ calState.month=11; calState.year--; }
+    renderCalendar();
+  });
+  $("calNext").addEventListener("click", function(){
+    calState.month++; if(calState.month>11){ calState.month=0; calState.year++; }
+    renderCalendar();
+  });
 
   // ---- detail screen ----
   function targetText(key){
