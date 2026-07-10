@@ -35,7 +35,7 @@
   body{
     background:var(--bg); color:var(--ink); font-family:var(--font);
     line-height:1.45; -webkit-font-smoothing:antialiased;
-    min-height:100vh; padding:0 0 118px;
+    min-height:100vh; padding:0 0 90px;
     transition:background-color .35s ease, color .35s ease;
   }
   .wrap{max-width:520px; margin:0 auto; padding:0 18px}
@@ -50,24 +50,29 @@
 
   /* ---- exercise cards (기록 tab) ---- */
   .ex-card{
-    width:100%; display:flex; align-items:center; gap:14px; text-align:left;
-    background:var(--surface); border:1px solid var(--line); border-radius:18px;
-    padding:14px 16px; margin-bottom:12px; cursor:pointer;
-    box-shadow:0 1px 3px rgba(0,0,0,.05);
-    transition:background-color .3s, border-color .3s, transform .15s;
+    width:100%; display:flex; align-items:center; gap:18px; text-align:left;
+    background:var(--surface); border:1px solid var(--line); border-radius:22px;
+    padding:22px 20px; margin-bottom:14px; cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+    transition:background-color .3s, border-color .3s, transform .18s, box-shadow .18s;
     font-family:inherit; color:inherit;
+    animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
   }
-  .ex-card:active{transform:scale(.97)}
+  .ex-card:nth-child(1){animation-delay:.03s}
+  .ex-card:nth-child(2){animation-delay:.09s}
+  .ex-card:nth-child(3){animation-delay:.15s}
+  @keyframes cardIn{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
+  .ex-card:active{transform:scale(.975); box-shadow:0 1px 4px rgba(0,0,0,.06)}
   .ex-icon{
-    flex:0 0 auto; width:46px; height:46px; border-radius:13px;
-    display:grid; place-items:center; background:var(--tint-bg); color:var(--tint);
+    flex:0 0 auto; width:60px; height:60px; border-radius:17px;
+    display:grid; place-items:center; background:var(--tint-bg);
+    font-size:32px; line-height:1;
   }
-  .ex-icon svg{width:24px; height:24px}
   .ex-body{flex:1; min-width:0}
-  .ex-name{font-size:16px; font-weight:700}
-  .ex-meta{font-size:13px; color:var(--ink-dim); margin-top:2px}
+  .ex-name{font-size:19px; font-weight:700; letter-spacing:-.01em}
+  .ex-meta{font-size:14px; color:var(--ink-dim); margin-top:4px}
   .ex-meta.ok{color:var(--gold); font-weight:600}
-  .ex-chev{color:var(--ink-faint); font-size:18px; flex:0 0 auto}
+  .ex-chev{color:var(--ink-faint); font-size:22px; flex:0 0 auto}
 
   /* ---- ios grouped list ---- */
   .group{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; transition:background-color .3s, border-color .3s}
@@ -104,8 +109,18 @@
 
   /* ---- screens (tab content) ---- */
   .screen{display:none}
-  .screen.active{display:block; animation:screenIn .32s cubic-bezier(.22,1,.36,1)}
-  @keyframes screenIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+  .screen.active{display:block; animation:screenIn .42s cubic-bezier(.22,1,.36,1)}
+  @keyframes screenIn{from{opacity:0; transform:translateY(16px) scale(.99)} to{opacity:1; transform:translateY(0) scale(1)}}
+  .page-header h1{animation:titleIn .5s cubic-bezier(.22,1,.36,1)}
+  @keyframes titleIn{from{opacity:0; transform:translateX(-10px)} to{opacity:1; transform:translateX(0)}}
+  /* settings groups stagger in */
+  .screen.active .group, .screen.active .segmented, .screen.active .group-label, .screen.active .foot{
+    animation:cardIn .45s cubic-bezier(.22,1,.36,1) backwards;
+  }
+  .screen.active .group-label:nth-of-type(1){animation-delay:.04s}
+  .screen.active .group-label:nth-of-type(2){animation-delay:.10s}
+  .screen.active .group-label:nth-of-type(3){animation-delay:.16s}
+  .screen.active .group-label:nth-of-type(4){animation-delay:.22s}
 
   /* ---- detail overlay (ios push navigation) ---- */
   .detail{
@@ -192,7 +207,8 @@
   .history-date{font-size:12px; color:var(--ink-dim); flex:0 0 42px; font-variant-numeric:tabular-nums}
   .history-main{flex:1; min-width:0; font-size:14px}
   .history-main b{font-weight:700}
-  .history-tag{color:var(--gold); font-weight:700; font-size:12px; margin-left:4px}
+  .history-tag{color:var(--gold); font-weight:700; font-size:12px; margin-left:6px}
+  .history-tag.sub{color:var(--ink-faint)}
   .history-actions{flex:0 0 auto; display:flex; gap:6px}
   .history-actions button{
     font-family:inherit; font-size:12px; font-weight:600; border-radius:8px; padding:6px 10px;
@@ -207,11 +223,11 @@
   /* ---- splash ---- */
   #splash{
     position:fixed; inset:0; z-index:9999; background:#3A4225;
-    display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:flex-start; justify-content:center;
     transition:opacity .7s cubic-bezier(.4,0,.2,1);
   }
   #splash img{
-    width:200px; height:200px; animation:splash-in .9s cubic-bezier(.22,1,.36,1);
+    width:150px; height:150px; margin-top:32vh; animation:splash-in .9s cubic-bezier(.22,1,.36,1);
     filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 26px rgba(244,182,27,.55));
   }
   #splash.hide{opacity:0; pointer-events:none}
@@ -246,25 +262,21 @@
   .modal-body .step-group:last-child{margin-bottom:0}
   .modal-body .step-title{font-size:13px; font-weight:700; color:var(--tint); margin-bottom:4px}
 
-  /* ---- glass tab bar ---- */
+  /* ---- flat bottom tab bar ---- */
   .tabbar{
-    position:fixed; left:50%; bottom:max(18px, env(safe-area-inset-bottom)); transform:translateX(-50%);
-    display:flex; gap:2px; padding:8px; border-radius:26px; z-index:500;
-    background:rgba(255,255,255,.68); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%);
-    border:1px solid rgba(0,0,0,.06); box-shadow:0 10px 34px rgba(0,0,0,.16);
+    position:fixed; left:0; right:0; bottom:0; z-index:500;
+    display:flex; background:var(--surface); border-top:1px solid var(--line);
+    padding:10px 4px calc(env(safe-area-inset-bottom,10px) + 6px);
     transition:background-color .3s, border-color .3s;
   }
-  :root[data-theme="dark"] .tabbar{
-    background:rgba(28,28,30,.68); border-color:rgba(255,255,255,.08); box-shadow:0 10px 34px rgba(0,0,0,.5);
-  }
   .tabbar button{
-    display:flex; flex-direction:column; align-items:center; gap:3px;
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
     background:none; border:0; color:var(--ink-faint); cursor:pointer;
-    padding:9px 30px; border-radius:19px; transition:.2s;
-    font-family:inherit; font-size:10.5px; font-weight:600;
+    padding:6px 4px; font-family:inherit; font-size:11px; font-weight:600; transition:.2s;
   }
-  .tabbar button svg{width:22px; height:22px; display:block}
-  .tabbar button.active{color:var(--tint); background:var(--tint-bg)}
+  .tabbar button .tab-emoji{font-size:26px; line-height:1; filter:grayscale(1) opacity(.55); transition:filter .2s}
+  .tabbar button.active{color:var(--tint)}
+  .tabbar button.active .tab-emoji{filter:none}
   .tabbar button:active{transform:scale(.94)}
 </style>
 </head>
@@ -282,10 +294,17 @@
   <section class="screen" id="screen-settings">
     <div class="page-header"><h1>설정</h1></div>
 
-    <div class="group-label">적용 기준</div>
-    <div class="segmented" id="ageSeg" role="group" aria-label="연령 기준 선택">
+    <div class="group-label">군종</div>
+    <div class="segmented" id="branchSeg" role="group" aria-label="군종 선택">
+      <button data-branch="army" aria-pressed="true">육군</button>
+      <button data-branch="navy" aria-pressed="false">해군</button>
+      <button data-branch="airforce" aria-pressed="false">공군</button>
+    </div>
+
+    <div class="group-label">나이</div>
+    <div class="segmented" id="ageSeg" role="group" aria-label="연령 선택">
       <button data-age="u25" aria-pressed="true">만 25세 이하</button>
-      <button data-age="26to30" aria-pressed="false">만 26~30세</button>
+      <button data-age="26to30" aria-pressed="false">만 26세 이상</button>
     </div>
 
     <div class="group-label">화면</div>
@@ -321,9 +340,9 @@
     </div>
 
     <p class="foot">
-      기준 · 남군 육군 체력검정 특급 (교차윗몸 / 인클라인 팔굽)<br>
-      26~30세는 팔굽·윗몸 -2개, 3km +15초 완화 적용<br>
-      기록은 이 기기에만 저장됩니다 · v0.3
+      기준 · 국군 체력검정 등급 (군종별 1~3급)<br>
+      육군 3km · 해군 1.5km · 공군 2km 달리기<br>
+      기록은 이 기기에만 저장됩니다 · v0.4
     </p>
   </section>
 
@@ -343,8 +362,8 @@
         <div class="stat-value" id="statLatest">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">특급까지</div>
-        <div class="stat-value" id="statGap">—</div>
+        <div class="stat-label">현재 등급</div>
+        <div class="stat-value" id="statGrade">—</div>
       </div>
     </div>
 
@@ -378,11 +397,11 @@
 
 <nav class="tabbar" id="tabbar" role="tablist" aria-label="화면 전환">
   <button data-tab="record" class="active" role="tab" aria-selected="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H18a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 17.5v-12Z"/><path d="M8 3v15"/><path d="M11 8h5"/><path d="M11 11.5h5"/></svg>
+    <span class="tab-emoji">📋</span>
     기록
   </button>
   <button data-tab="settings" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.16.51.5.94 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06Z"/></svg>
+    <span class="tab-emoji">⚙️</span>
     설정
   </button>
 </nav>
@@ -390,23 +409,26 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", THEMEKEY="teukup_theme_v1", TABKEY="teukup_tab_v2";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", BRANCHKEY="teukup_branch_v1", THEMEKEY="teukup_theme_v1", TABKEY="teukup_tab_v2";
 
-  // 남군 육군 특급 기준 (연령대별)
+  // 국군 체력검정 등급 기준 (군종별)
+  // grades = [1급 컷, 2급 컷, 3급 컷]. 반복종목은 이상, 달리기(초)는 이하.
   var STD={
-    u25:      {push:72, sit:86, run:750},   // 12:30
-    "26to30": {push:70, sit:84, run:765}    // 12:45
+    army:{ label:"육군", runDist:"3km",
+      push:[72,66,60], sit:[82,76,70], run:[750,810,870] },        // 12:30 / 13:30 / 14:30
+    navy:{ label:"해군", runDist:"1.5km",
+      push:[70,60,50], sit:[80,70,60], run:[435,465,510] },        // 7:15 / 7:45 / 8:30
+    airforce:{ label:"공군", runDist:"2km",
+      push:[68,60,52], sit:[78,70,62], run:[510,540,570] }         // 8:30 / 9:00 / 9:30
   };
 
   var EXES={
-    push:{name:"팔굽혀펴기", emoji:"💪", unit:"개", isTime:false,
-      icon:'<circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="8" x2="9" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/>'},
-    sit:{name:"윗몸일으키기", emoji:"🔥", unit:"개", isTime:false,
-      icon:'<path d="M12 3c-1 2.5-3.2 3.2-3.2 6.2a3.2 3.2 0 0 0 6.4 0c0-.8-.4-1.6-.8-2.4.8 0 1.6.8 1.6 3.2a4 4 0 0 1-8 0c0-4 2.4-4.8 4-7Z"/><path d="M9 15v3l-2 3M15 15v3l2 3M12 15v6"/>'},
-    run:{name:"3km 달리기", emoji:"🏃", unit:"", isTime:true,
-      icon:'<circle cx="14.5" cy="4.5" r="1.8"/><path d="M9 20l1.5-4.5-2-2 1.2-4L13 8l1.5 2.5 3 1M9.5 13.5L7 15l-2 4"/>'}
+    push:{name:"팔굽혀펴기", emoji:"💪", unit:"개", isTime:false},
+    sit:{name:"윗몸일으키기", emoji:"🔥", unit:"개", isTime:false},
+    run:{name:"달리기", emoji:"🏃", unit:"", isTime:true}
   };
 
+  var branch = localStorage.getItem(BRANCHKEY) || "army";
   var age = localStorage.getItem(AGEKEY) || "u25";
   var records = load();
   var currentDetailKey = null;
@@ -416,6 +438,20 @@
   function persist(){ localStorage.setItem(STORE, JSON.stringify(records)) }
   function fmtRun(s){ if(s==null||isNaN(s))return "—"; var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
   function today(){ return new Date().toISOString().slice(0,10) }
+
+  // ---- standards / grading ----
+  function exName(key){ return key==="run" ? STD[branch].runDist+" 달리기" : EXES[key].name; }
+  function cuts(key){ return STD[branch][key]; }
+  function topCut(key){ return cuts(key)[0]; }   // 1급 기준
+  function gradeOf(key, val){                     // 1/2/3급 or 0(미달)
+    var g=cuts(key);
+    if(EXES[key].isTime){
+      if(val<=g[0]) return 1; if(val<=g[1]) return 2; if(val<=g[2]) return 3; return 0;
+    }
+    if(val>=g[0]) return 1; if(val>=g[1]) return 2; if(val>=g[2]) return 3; return 0;
+  }
+  function gradeLabel(gr){ return gr===0 ? "미달" : gr+"급"; }
+  function passes(key, val){ return gradeOf(key, val)===1; }  // 1급 = 최고 등급
 
   // ---- theme ----
   function applyTheme(t){
@@ -436,25 +472,21 @@
     withVal.sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
     return withVal[0];
   }
-  function passes(key, val){
-    var std = STD[age][key];
-    return key==="run" ? val<=std : val>=std;
-  }
   function renderCards(){
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
       var ex=EXES[key], rec=latestValue(key);
       var meta, ok=false;
       if(rec){
-        var val=rec[key];
-        ok=passes(key,val);
-        meta=(ex.isTime?fmtRun(val):val+ex.unit)+" · "+(rec.date||"")+(ok?" · 특급":"");
+        var val=rec[key], gr=gradeOf(key,val);
+        ok=(gr===1);
+        meta=(ex.isTime?fmtRun(val):val+ex.unit)+" · "+gradeLabel(gr);
       }else{
         meta="아직 기록이 없습니다";
       }
       return '<button class="ex-card" data-ex="'+key+'">'
-        +'<div class="ex-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ex.icon+'</svg></div>'
-        +'<div class="ex-body"><div class="ex-name">'+ex.emoji+' '+ex.name+'</div><div class="ex-meta'+(ok?' ok':'')+'">'+meta+'</div></div>'
+        +'<div class="ex-icon">'+ex.emoji+'</div>'
+        +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta'+(ok?' ok':'')+'">'+meta+'</div></div>'
         +'<div class="ex-chev">›</div>'
       +'</button>';
     }).join("");
@@ -465,8 +497,8 @@
 
   // ---- detail screen ----
   function targetText(key){
-    var std=STD[age][key];
-    return key==="run" ? "특급 기준 "+fmtRun(std)+" 이내" : "특급 기준 "+std+"개";
+    var v=topCut(key);
+    return EXES[key].isTime ? "1급 기준 "+fmtRun(v)+" 이내" : "1급 기준 "+v+"개";
   }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
@@ -510,7 +542,7 @@
   function openDetail(key){
     currentDetailKey=key;
     var ex=EXES[key];
-    $("detailTitle").textContent=ex.emoji+" "+ex.name;
+    $("detailTitle").textContent=ex.emoji+" "+exName(key);
     $("detailTarget").textContent=targetText(key);
     hideInputCard();
     renderStats(key);
@@ -543,29 +575,19 @@
   });
 
   // ---- stats ----
-  function gapText(key, val){
-    var std=STD[age][key], ex=EXES[key];
-    if(ex.isTime){
-      var diff=std-val; // positive = under target = pass
-      return diff>=0 ? {text:"+"+fmtRun(diff), ok:true} : {text:"-"+fmtRun(-diff), ok:false};
-    }
-    var diff=val-std;
-    return diff>=0 ? {text:"+"+diff+"개", ok:true} : {text:diff+"개", ok:false};
-  }
   function renderStats(key){
     var ex=EXES[key], rec=latestValue(key);
-    var latestEl=$("statLatest"), gapEl=$("statGap");
+    var latestEl=$("statLatest"), gradeEl=$("statGrade");
     if(!rec){
       latestEl.textContent="—"; latestEl.className="stat-value muted";
-      gapEl.textContent="—"; gapEl.className="stat-value muted";
+      gradeEl.textContent="—"; gradeEl.className="stat-value muted";
       return;
     }
-    var val=rec[key];
+    var val=rec[key], gr=gradeOf(key,val);
     latestEl.textContent = ex.isTime ? fmtRun(val) : val+ex.unit;
     latestEl.className="stat-value";
-    var g=gapText(key,val);
-    gapEl.textContent=g.text;
-    gapEl.className="stat-value"+(g.ok?" gold":"");
+    gradeEl.textContent=gradeLabel(gr);
+    gradeEl.className="stat-value"+(gr===1?" gold":(gr===0?" muted":""));
   }
 
   // ---- history ----
@@ -579,10 +601,11 @@
       return;
     }
     box.innerHTML = pts.map(function(r){
-      var val=r[key], ok=passes(key,val);
+      var val=r[key], gr=gradeOf(key,val);
+      var tag = gr===0 ? '' : '<span class="history-tag'+(gr===1?'':' sub')+'">'+gradeLabel(gr)+'</span>';
       return '<div class="history-row">'
         +'<div class="history-date">'+shortDate(r.date)+'</div>'
-        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+(ok?'<span class="history-tag">특급</span>':'')+'</div>'
+        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+tag+'</div>'
         +'<div class="history-actions">'
           +'<button class="edit" data-date="'+r.date+'">수정</button>'
           +'<button class="del" data-date="'+r.date+'">삭제</button>'
@@ -651,7 +674,7 @@
     }
     empty.style.display="none"; svg.style.display="block";
 
-    var target=STD[age][key];
+    var target=topCut(key);
     var values=pts.map(function(p){ return p[key]; });
     var lower=ex.isTime;
     var allVals=values.concat([target]);
@@ -696,18 +719,39 @@
       +dots+valueLabels+dateLabels;
   }
 
-  // ---- settings: age standard ----
+  // ---- settings: refresh everything after standard change ----
+  function onStandardChange(){
+    renderCards();
+    if(currentDetailKey){
+      $("detailTitle").textContent=EXES[currentDetailKey].emoji+" "+exName(currentDetailKey);
+      $("detailTarget").textContent=targetText(currentDetailKey);
+      renderStats(currentDetailKey);
+      drawGraph(currentDetailKey);
+      renderHistory(currentDetailKey);
+    }
+  }
+
+  // ---- settings: branch ----
+  Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      branch=b.getAttribute("data-branch"); localStorage.setItem(BRANCHKEY, branch);
+      Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      onStandardChange();
+    });
+  });
+  Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", x.getAttribute("data-branch")===branch?"true":"false");
+  });
+
+  // ---- settings: age (저장만 — 세부 연령 기준은 추후 반영) ----
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(b){
     b.addEventListener("click", function(){
       age=b.getAttribute("data-age"); localStorage.setItem(AGEKEY, age);
       Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
         x.setAttribute("aria-pressed", x===b?"true":"false");
       });
-      renderCards();
-      if(currentDetailKey){
-        $("detailTarget").textContent=targetText(currentDetailKey);
-        drawGraph(currentDetailKey);
-      }
     });
   });
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
