@@ -109,8 +109,9 @@
 
   /* ---- screens (tab content) ---- */
   .screen{display:none}
-  .screen.active{display:block; animation:screenIn .42s cubic-bezier(.22,1,.36,1)}
-  @keyframes screenIn{from{opacity:0; transform:translateY(16px) scale(.99)} to{opacity:1; transform:translateY(0) scale(1)}}
+  .screen{--slide-dir:1}
+  .screen.active{display:block; animation:screenIn .38s cubic-bezier(.22,1,.36,1)}
+  @keyframes screenIn{from{opacity:0; transform:translateX(calc(var(--slide-dir)*28px)) scale(.98)} to{opacity:1; transform:translateX(0) scale(1)}}
   .page-header h1{animation:titleIn .5s cubic-bezier(.22,1,.36,1)}
   @keyframes titleIn{from{opacity:0; transform:translateX(-10px)} to{opacity:1; transform:translateX(0)}}
   /* settings groups stagger in */
@@ -139,8 +140,6 @@
     padding:8px 10px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:2px;
   }
   .detail-back:active{opacity:.5}
-  .detail-title-wrap{display:flex; align-items:center; gap:8px}
-  .detail-title-wrap .accent-bar{width:4px; height:17px; border-radius:2px; background:var(--tint)}
   .detail-title{font-size:16px; font-weight:800}
   .detail-spacer{width:64px}
   .detail-body{flex:1; overflow-y:auto; padding:16px 18px 40px}
@@ -294,17 +293,15 @@
   <section class="screen" id="screen-settings">
     <div class="page-header"><h1>설정</h1></div>
 
-    <div class="group-label">군종</div>
-    <div class="segmented" id="branchSeg" role="group" aria-label="군종 선택">
-      <button data-branch="army" aria-pressed="true">육군</button>
-      <button data-branch="navy" aria-pressed="false">해군</button>
-      <button data-branch="airforce" aria-pressed="false">공군</button>
-    </div>
-
-    <div class="group-label">나이</div>
-    <div class="segmented" id="ageSeg" role="group" aria-label="연령 선택">
-      <button data-age="u25" aria-pressed="true">만 25세 이하</button>
-      <button data-age="26to30" aria-pressed="false">만 26세 이상</button>
+    <div class="group-label">기준</div>
+    <div class="group">
+      <div class="row" id="stdRow" style="cursor:pointer">
+        <div>
+          <div class="row-label">군종 · 연령 기준</div>
+          <div class="row-desc" id="stdRowDesc">육군 · 만 25세 이하</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </div>
     </div>
 
     <div class="group-label">화면</div>
@@ -352,7 +349,7 @@
 <div class="detail" id="detail">
   <div class="detail-nav">
     <button class="detail-back" id="detailBack">‹ 기록</button>
-    <div class="detail-title-wrap"><span class="accent-bar"></span><span class="detail-title" id="detailTitle">팔굽혀펴기</span></div>
+    <span class="detail-title" id="detailTitle">팔굽혀펴기</span>
     <div class="detail-spacer"></div>
   </div>
   <div class="detail-body">
@@ -383,6 +380,29 @@
 
     <div class="group-label">기록 히스토리</div>
     <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- ============ 기준 설정 (슬라이드 화면) ============ -->
+<div class="detail" id="stdDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="stdBack">‹ 설정</button>
+    <span class="detail-title">기준</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="group-label">군종</div>
+    <div class="segmented" id="branchSeg" role="group" aria-label="군종 선택">
+      <button data-branch="army" aria-pressed="true">육군</button>
+      <button data-branch="navy" aria-pressed="false">해군</button>
+      <button data-branch="airforce" aria-pressed="false">공군</button>
+    </div>
+
+    <div class="group-label">나이</div>
+    <div class="segmented" id="ageSeg" role="group" aria-label="연령 선택">
+      <button data-age="u25" aria-pressed="true">만 25세 이하</button>
+      <button data-age="26to30" aria-pressed="false">만 26세 이상</button>
+    </div>
   </div>
 </div>
 
@@ -720,7 +740,12 @@
   }
 
   // ---- settings: refresh everything after standard change ----
+  function ageLabel(a){ return a==="u25" ? "만 25세 이하" : "만 26세 이상"; }
+  function updateStdRowDesc(){
+    $("stdRowDesc").textContent = STD[branch].label+" · "+ageLabel(age);
+  }
   function onStandardChange(){
+    updateStdRowDesc();
     renderCards();
     if(currentDetailKey){
       $("detailTitle").textContent=EXES[currentDetailKey].emoji+" "+exName(currentDetailKey);
@@ -730,6 +755,10 @@
       renderHistory(currentDetailKey);
     }
   }
+
+  // ---- settings: 기준 sub-page ----
+  $("stdRow").addEventListener("click", function(){ $("stdDetail").classList.add("open"); });
+  $("stdBack").addEventListener("click", function(){ $("stdDetail").classList.remove("open"); });
 
   // ---- settings: branch ----
   Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(b){
@@ -745,18 +774,20 @@
     x.setAttribute("aria-pressed", x.getAttribute("data-branch")===branch?"true":"false");
   });
 
-  // ---- settings: age (저장만 — 세부 연령 기준은 추후 반영) ----
+  // ---- settings: age ----
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(b){
     b.addEventListener("click", function(){
       age=b.getAttribute("data-age"); localStorage.setItem(AGEKEY, age);
       Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
         x.setAttribute("aria-pressed", x===b?"true":"false");
       });
+      onStandardChange();
     });
   });
   Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
     x.setAttribute("aria-pressed", x.getAttribute("data-age")===age?"true":"false");
   });
+  updateStdRowDesc();
 
   // ---- settings: wipe data ----
   $("wipeBtn").addEventListener("click", function(){
@@ -798,9 +829,15 @@
   }
 
   // ---- tab switching ----
+  var TAB_ORDER=["record","settings"];
   function setTab(name){
+    var prevActive=document.querySelector(".screen.active");
+    var prevName=prevActive ? prevActive.id.replace("screen-","") : null;
+    var dir = (prevName && TAB_ORDER.indexOf(name)<TAB_ORDER.indexOf(prevName)) ? -1 : 1;
     Array.prototype.forEach.call(document.querySelectorAll(".screen"), function(p){
-      p.classList.toggle("active", p.id==="screen-"+name);
+      var isTarget=p.id==="screen-"+name;
+      p.classList.toggle("active", isTarget);
+      if(isTarget) p.style.setProperty("--slide-dir", dir);
     });
     Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
       var on=b.getAttribute("data-tab")===name;
