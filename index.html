@@ -224,6 +224,33 @@
   @keyframes splash-in{0%{transform:scale(.72); opacity:0}55%{transform:scale(1.04); opacity:1}100%{transform:scale(1); opacity:1}}
   @keyframes splash-out{0%{transform:scale(1); opacity:1}100%{transform:scale(1.08); opacity:0}}
 
+  /* ---- streak banner ---- */
+  .streak-banner{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--gold-bg); color:var(--gold); font-weight:700; font-size:13.5px;
+    padding:10px; border-radius:13px; margin-bottom:14px;
+    animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
+  }
+
+  /* ---- save toast + grade celebration ---- */
+  .toast{
+    position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,10px) + 82px); z-index:950;
+    transform:translateX(-50%) translateY(14px); background:var(--ink); color:var(--bg);
+    padding:12px 22px; border-radius:999px; font-size:14px; font-weight:700; white-space:nowrap;
+    box-shadow:0 10px 28px rgba(0,0,0,.28); opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast.gold{background:var(--gold); color:#241c00}
+  .confetti-burst{position:fixed; inset:0; z-index:940; pointer-events:none; overflow:hidden}
+  .confetti-piece{position:absolute; left:50%; bottom:140px; font-size:22px; animation:confettiFly 1.1s ease-out forwards}
+  @keyframes confettiFly{
+    0%{transform:translate(-50%,0) scale(.5) rotate(0deg); opacity:1}
+    100%{transform:translate(calc(-50% + var(--dx)), var(--dy)) scale(1) rotate(var(--rot)); opacity:0}
+  }
+  @keyframes gradePulse{0%{transform:scale(1)}35%{transform:scale(1.28)}60%{transform:scale(.94)}100%{transform:scale(1)}}
+  .stat-value.pulse{animation:gradePulse .55s cubic-bezier(.34,1.56,.64,1)}
+
   /* ---- floating "앱 설치" badge ---- */
   .install-badge{
     position:fixed; right:14px; bottom:calc(env(safe-area-inset-bottom,10px) + 82px); z-index:490;
@@ -324,6 +351,9 @@
   <!-- ============ 기록 화면 ============ -->
   <section class="screen active" id="screen-record">
     <div class="page-header"><h1>기록</h1></div>
+    <div class="streak-banner" id="streakBanner" style="display:none">
+      🔥 <span id="streakCount">0</span>일 연속 기록 중
+    </div>
     <div class="stat-row">
       <div class="stat-card">
         <div class="stat-label">종합 등급</div>
@@ -491,6 +521,9 @@
   <span class="tab-emoji" style="font-size:16px">📲</span> 앱 설치
 </button>
 
+<!-- ============ 저장 피드백 토스트 ============ -->
+<div class="toast" id="toast"></div>
+
 <!-- ============ 홈 화면 추가 안내 ============ -->
 <div class="modal-backdrop" id="a2hsBackdrop">
   <div class="modal-sheet">
@@ -633,6 +666,28 @@
     else if(diffDays===0){ ddayEl.textContent="D-DAY"; ddayEl.className="stat-value gold"; }
     else{ ddayEl.textContent="D+"+(-diffDays); ddayEl.className="stat-value muted"; }
   }
+
+  // ---- streak: consecutive days with at least one exercise logged ----
+  function hasAnyRecordOn(dateStr){
+    return records.some(function(r){ return r.date===dateStr && ["push","sit","run"].some(function(k){ return typeof r[k]==="number"; }); });
+  }
+  function computeStreak(){
+    var d=new Date(); d.setHours(0,0,0,0);
+    var todayStr=ymd(d.getFullYear(), d.getMonth(), d.getDate());
+    if(!hasAnyRecordOn(todayStr)) d.setDate(d.getDate()-1); // streak still alive if yesterday was logged
+    var count=0;
+    while(hasAnyRecordOn(ymd(d.getFullYear(), d.getMonth(), d.getDate()))){
+      count++; d.setDate(d.getDate()-1);
+    }
+    return count;
+  }
+  function renderStreak(){
+    var n=computeStreak();
+    var banner=$("streakBanner");
+    if(n<1){ banner.style.display="none"; return; }
+    $("streakCount").textContent=n;
+    banner.style.display="flex";
+  }
   $("nextTestDate").addEventListener("change", function(){
     if(this.value) localStorage.setItem(NEXTTESTKEY, this.value);
     else localStorage.removeItem(NEXTTESTKEY);
@@ -679,6 +734,7 @@
       b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
     });
     renderHomeSummary();
+    renderStreak();
     renderCalendar();
   }
 
@@ -836,6 +892,32 @@
     drawGraph(key);
   }
 
+  // ---- save feedback: toast + confetti burst on 1급 ----
+  function showToast(text, gold){
+    var t=$("toast");
+    clearTimeout(t._hideTimer);
+    t.textContent=text;
+    t.className="toast show"+(gold?" gold":"");
+    t._hideTimer=setTimeout(function(){ t.classList.remove("show"); }, gold?2200:1400);
+  }
+  function burstConfetti(){
+    var wrap=document.createElement("div");
+    wrap.className="confetti-burst";
+    var emojis=["🎉","⭐","✨","🔥","🏅"];
+    for(var i=0;i<10;i++){
+      var span=document.createElement("span");
+      span.className="confetti-piece";
+      span.textContent=emojis[i%emojis.length];
+      span.style.setProperty("--dx", (Math.random()*260-130).toFixed(0)+"px");
+      span.style.setProperty("--dy", (-(200+Math.random()*220)).toFixed(0)+"px");
+      span.style.setProperty("--rot", (Math.random()*360-180).toFixed(0)+"deg");
+      span.style.animationDelay=(Math.random()*.15)+"s";
+      wrap.appendChild(span);
+    }
+    document.body.appendChild(wrap);
+    setTimeout(function(){ wrap.remove(); }, 1400);
+  }
+
   $("detailSaveBtn").addEventListener("click", function(){
     var key=currentDetailKey, val=readInputValue(key);
     if(isNaN(val)){ alert("값을 입력해야 저장됩니다."); return; }
@@ -847,6 +929,16 @@
     localStorage.setItem(LASTDATEKEY, dateStr);
     buildInput(key); // clear the value field, keep the date for the next entry
     refreshDetail(key);
+
+    var gr=gradeOf(key,val);
+    if(gr===1){
+      showToast("🎉 "+exName(key)+" 1급 달성!", true);
+      burstConfetti();
+      var g=$("statGrade");
+      g.classList.remove("pulse"); void g.offsetWidth; g.classList.add("pulse");
+    }else{
+      showToast("저장했어요 ✓");
+    }
   });
 
   // ---- stats ----
