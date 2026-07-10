@@ -113,16 +113,16 @@
   .screen.active{display:block; animation:screenFade .2s ease-out}
   @keyframes screenFade{from{opacity:0} to{opacity:1}}
 
-  /* ---- detail overlay (ios push navigation) ---- */
+  /* ---- detail overlay: quick fade, matching the tab-switch motion ---- */
   .detail{
     position:fixed; inset:0; z-index:800; background:var(--bg);
-    transform:translateX(100%);
-    transition:transform .38s cubic-bezier(.32,.72,0,1), visibility 0s linear .38s;
+    opacity:0;
+    transition:opacity .2s ease-out, visibility 0s linear .2s;
     display:flex; flex-direction:column; visibility:hidden;
   }
   .detail.open{
-    transform:translateX(0); visibility:visible;
-    transition:transform .38s cubic-bezier(.32,.72,0,1), visibility 0s linear 0s;
+    opacity:1; visibility:visible;
+    transition:opacity .2s ease-out, visibility 0s linear 0s;
   }
   .detail-nav{
     flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
