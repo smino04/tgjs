@@ -74,6 +74,7 @@
   .ex-body{flex:1; min-width:0}
   .ex-name{font-size:19px; font-weight:700; letter-spacing:-.01em}
   .ex-meta{font-size:14px; color:var(--ink-dim); margin-top:4px; display:flex; align-items:center; gap:6px}
+  .ex-meta.empty{color:var(--tint); font-weight:600}
   .ex-chev{color:var(--ink-faint); font-size:22px; flex:0 0 auto}
   .ex-progress{margin-top:14px; height:6px; border-radius:99px; background:var(--bg); overflow:hidden}
   .ex-progress > i{display:block; height:100%; border-radius:99px; background:var(--tint); transition:width .5s cubic-bezier(.22,1,.36,1)}
@@ -191,7 +192,15 @@
   .graph-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 14px; transition:background-color .3s, border-color .3s}
   .graph-card svg{width:100%; height:auto; display:block; overflow:visible}
   .graph-card svg text{font-family:inherit; font-variant-numeric:tabular-nums}
-  .graph-empty{text-align:center; color:var(--ink-faint); font-size:13px; padding:30px 10px}
+  .graph-empty{text-align:center; padding:22px 16px 26px}
+  .graph-empty .empty-badge{
+    width:64px; height:64px; margin:0 auto 14px; border-radius:50%;
+    background:var(--tint-bg); display:grid; place-items:center; font-size:34px;
+    animation:emptyPop .5s cubic-bezier(.34,1.4,.64,1) backwards;
+  }
+  @keyframes emptyPop{from{opacity:0; transform:scale(.6)} to{opacity:1; transform:scale(1)}}
+  .graph-empty .empty-title{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:5px}
+  .graph-empty .empty-sub{font-size:13px; color:var(--ink-faint); line-height:1.6}
 
   /* ---- history list ---- */
   .history-row{
@@ -390,7 +399,11 @@
 
     <div class="graph-card">
       <svg id="detailGraph" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>
-      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
+      <div class="graph-empty" id="detailEmpty">
+        <div class="empty-badge" id="emptyBadge">🎯</div>
+        <div class="empty-title">첫 기록을 남겨보세요</div>
+        <div class="empty-sub" id="emptySub">위 칸에 오늘 기록을 입력하면<br>여기에 성장 그래프가 그려져요</div>
+      </div>
     </div>
 
     <div class="group-label">기록 히스토리</div>
@@ -590,12 +603,12 @@
         progress=progressToGoal(key,val);
         meta=(ex.isTime?fmtRun(val):val+ex.unit)+' '+gradePill(gr);
       }else{
-        meta="아직 기록이 없습니다";
+        meta="첫 기록을 남겨보세요 →";
       }
       return '<button class="ex-card'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
-          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta">'+meta+'</div></div>'
+          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta'+(rec?'':' empty')+'">'+meta+'</div></div>'
           +'<div class="ex-chev">›</div>'
         +'</div>'
         +'<div class="ex-progress'+(atGoal?' at-goal':'')+'"><i style="width:'+(progress*100).toFixed(0)+'%"></i></div>'
@@ -645,6 +658,7 @@
     var ex=EXES[key];
     $("detailTitle").textContent=ex.emoji+" "+exName(key);
     $("detailTarget").textContent=targetText(key);
+    $("emptyBadge").textContent=ex.emoji;
     fillInputCard();
     renderStats(key);
     drawGraph(key);
@@ -699,7 +713,7 @@
     var pts = records.filter(function(r){ return typeof r[key]==="number"; })
       .sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
     if(!pts.length){
-      box.innerHTML='<div class="graph-empty">기록 히스토리가 없습니다.</div>';
+      box.innerHTML='<div class="graph-empty" style="padding:16px"><div class="empty-sub">기록이 쌓이면 여기서 한눈에 확인할 수 있어요</div></div>';
       return;
     }
     box.innerHTML = pts.map(function(r){
