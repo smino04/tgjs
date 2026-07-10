@@ -87,17 +87,6 @@
   .row.danger{cursor:pointer}
   .row.danger .row-label{color:var(--danger); font-weight:600}
 
-  /* ---- toggle switch ---- */
-  .switch{position:relative; width:51px; height:31px; flex:0 0 auto}
-  .switch input{position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; z-index:1}
-  .switch .track{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background-color .25s}
-  .switch .track::after{
-    content:""; position:absolute; top:2px; left:2px; width:27px; height:27px;
-    background:#fff; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,.3); transition:transform .25s;
-  }
-  .switch input:checked + .track{background:var(--green)}
-  .switch input:checked + .track::after{transform:translateX(20px)}
-
   /* ---- segmented ---- */
   .segmented{display:flex; gap:3px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:3px}
   .segmented button{
@@ -303,14 +292,10 @@
     </div>
 
     <div class="group-label">화면</div>
-    <div class="group">
-      <div class="row">
-        <span class="row-label">다크 모드</span>
-        <label class="switch">
-          <input type="checkbox" id="darkToggle" aria-label="다크 모드">
-          <span class="track"></span>
-        </label>
-      </div>
+    <div class="segmented" id="themeSeg" role="group" aria-label="화면 모드 선택">
+      <button data-theme-pref="light" aria-pressed="true">라이트</button>
+      <button data-theme-pref="dark" aria-pressed="false">다크</button>
+      <button data-theme-pref="system" aria-pressed="false">자동</button>
     </div>
 
     <div class="group-label">도움말</div>
@@ -475,16 +460,35 @@
   function gradeLabel(gr){ return gr===0 ? "미달" : gr+"급"; }
   function passes(key, val){ return gradeOf(key, val)===1; }  // 1급 = 최고 등급
 
-  // ---- theme ----
-  function applyTheme(t){
-    document.documentElement.setAttribute("data-theme", t);
-    $("darkToggle").checked = (t==="dark");
+  // ---- theme (light / dark / system-auto) ----
+  var systemDarkMQ = window.matchMedia("(prefers-color-scheme: dark)");
+  var themePref = localStorage.getItem(THEMEKEY) || "system";
+
+  function resolveTheme(pref){
+    return pref==="system" ? (systemDarkMQ.matches ? "dark" : "light") : pref;
   }
-  applyTheme(localStorage.getItem(THEMEKEY) || "light");
-  $("darkToggle").addEventListener("change", function(){
-    var t = this.checked ? "dark" : "light";
-    localStorage.setItem(THEMEKEY, t);
-    applyTheme(t);
+  function applyTheme(pref){
+    themePref = pref;
+    document.documentElement.setAttribute("data-theme", resolveTheme(pref));
+    Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-theme-pref")===pref ? "true" : "false");
+    });
+  }
+  applyTheme(themePref);
+  Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      var pref=b.getAttribute("data-theme-pref");
+      localStorage.setItem(THEMEKEY, pref);
+      applyTheme(pref);
+    });
+  });
+  // live-follow the system setting whenever "자동" is selected
+  systemDarkMQ.addEventListener("change", function(){
+    if(themePref==="system") applyTheme("system");
+  });
+  // some browsers freeze media-query listeners while backgrounded; re-check on resume too
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible" && themePref==="system") applyTheme("system");
   });
 
   // ---- exercise cards ----
