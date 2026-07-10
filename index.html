@@ -38,8 +38,8 @@
     min-height:100vh; padding:0 0 90px;
     transition:background-color .35s ease, color .35s ease;
   }
-  .wrap{max-width:520px; margin:0 auto; overflow-x:hidden}
-  .screens-strip{display:flex; width:200%; transition:transform .42s cubic-bezier(.22,1,.36,1)}
+  .wrap{max-width:520px; margin:0 auto}
+  .screens-strip{display:contents}
 
   .page-header{padding:0 2px 6px; padding-top:calc(env(safe-area-inset-top, 20px) + 14px)}
   .page-header h1{font-size:34px; font-weight:800; letter-spacing:-.02em; margin:0}
@@ -108,18 +108,10 @@
 
   .foot{margin-top:22px; padding:0 4px; font-size:12px; color:var(--ink-faint); line-height:1.8}
 
-  /* ---- screens (tab content) ---- */
-  .screen{flex:0 0 50%; width:50%; min-width:0; box-sizing:border-box; padding:0 18px}
-  .page-header h1{animation:titleIn .5s cubic-bezier(.22,1,.36,1)}
-  @keyframes titleIn{from{opacity:0; transform:translateX(-10px)} to{opacity:1; transform:translateX(0)}}
-  /* settings groups stagger in (replayed each time the tab becomes active) */
-  .screen.active .group, .screen.active .segmented, .screen.active .group-label, .screen.active .foot{
-    animation:cardIn .45s cubic-bezier(.22,1,.36,1) backwards;
-  }
-  .screen.active .group-label:nth-of-type(1){animation-delay:.04s}
-  .screen.active .group-label:nth-of-type(2){animation-delay:.10s}
-  .screen.active .group-label:nth-of-type(3){animation-delay:.16s}
-  .screen.active .group-label:nth-of-type(4){animation-delay:.22s}
+  /* ---- screens (tab content): quick fade-in, matching the reference app's tab switch ---- */
+  .screen{display:none; padding:0 18px}
+  .screen.active{display:block; animation:screenFade .2s ease-out}
+  @keyframes screenFade{from{opacity:0} to{opacity:1}}
 
   /* ---- detail overlay (ios push navigation) ---- */
   .detail{
@@ -832,16 +824,13 @@
     setTimeout(openA2HS, 3000);
   }
 
-  // ---- tab switching: a two-pane strip that physically slides, both panes move ----
-  var TAB_ORDER=["record","settings"];
+  // ---- tab switching: quick fade-in on the incoming screen ----
   function setTab(name){
-    var idx=TAB_ORDER.indexOf(name);
-    $("screensStrip").style.transform="translateX(-"+(idx*50)+"%)";
     Array.prototype.forEach.call(document.querySelectorAll(".screen"), function(p){
       var isTarget=p.id==="screen-"+name;
       p.classList.remove("active");
       if(isTarget){
-        void p.offsetWidth; // restart the entrance stagger animations each visit
+        void p.offsetWidth; // restart the fade-in animation every visit
         p.classList.add("active");
       }
     });
