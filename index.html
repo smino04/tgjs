@@ -273,6 +273,16 @@
   <!-- ============ 기록 화면 ============ -->
   <section class="screen active" id="screen-record">
     <div class="page-header"><h1>기록</h1></div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">종합 등급</div>
+        <div class="stat-value" id="homeGrade">—</div>
+      </div>
+      <div class="stat-card" id="homeDdayCard" style="cursor:pointer">
+        <div class="stat-label">다음 측정</div>
+        <div class="stat-value" id="homeDday">—</div>
+      </div>
+    </div>
     <div id="exCards"></div>
   </section>
 
@@ -288,6 +298,20 @@
           <div class="row-desc" id="stdRowDesc">육군 · 만 25세 이하</div>
         </div>
         <span class="ex-chev">›</span>
+      </div>
+    </div>
+
+    <div class="group-label">일정</div>
+    <div class="group">
+      <div class="row">
+        <div>
+          <div class="row-label">다음 측정일</div>
+          <div class="row-desc">홈 화면에 D-day로 표시됩니다</div>
+        </div>
+        <input class="date-input" id="nextTestDate" type="date" style="width:auto; margin:0" aria-label="다음 측정일">
+      </div>
+      <div class="row danger" id="clearNextTestBtn" style="cursor:pointer">
+        <div class="row-label">측정일 지우기</div>
       </div>
     </div>
 
@@ -416,7 +440,7 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", BRANCHKEY="teukup_branch_v1", THEMEKEY="teukup_theme_v1", TABKEY="teukup_tab_v2", LASTDATEKEY="teukup_lastdate_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", BRANCHKEY="teukup_branch_v1", THEMEKEY="teukup_theme_v1", TABKEY="teukup_tab_v2", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1";
 
   // 국군 체력검정 등급 기준 (군종별)
   // grades = [1급 컷, 2급 컷, 3급 컷]. 반복종목은 이상, 달리기(초)는 이하.
@@ -498,6 +522,53 @@
     withVal.sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
     return withVal[0];
   }
+
+  // ---- home summary: overall grade + next-test D-day ----
+  var GRADE_RANK={0:0, 3:1, 2:2, 1:3}; // higher rank = better; 0(미달) is worst
+  function renderHomeSummary(){
+    var gradeEl=$("homeGrade"), ddayEl=$("homeDday"), ddayCard=$("homeDdayCard");
+
+    var keys=Object.keys(EXES), have=[], grades=[];
+    keys.forEach(function(k){
+      var rec=latestValue(k);
+      if(rec){ have.push(k); grades.push(gradeOf(k, rec[k])); }
+    });
+    if(have.length===0){
+      gradeEl.textContent="—"; gradeEl.className="stat-value muted";
+    }else if(have.length<keys.length){
+      gradeEl.textContent=have.length+"/"+keys.length+" 종목";
+      gradeEl.className="stat-value";
+    }else{
+      var worst=grades.reduce(function(a,b){ return GRADE_RANK[b]<GRADE_RANK[a] ? b : a; });
+      gradeEl.textContent = worst===1 ? "특급전사!" : gradeLabel(worst);
+      gradeEl.className="stat-value"+(worst===1?" gold":(worst===0?" muted":""));
+    }
+
+    var nextDate=localStorage.getItem(NEXTTESTKEY);
+    if(!nextDate){
+      ddayEl.textContent="설정하기"; ddayEl.className="stat-value muted";
+      return;
+    }
+    var diffDays=Math.round((new Date(nextDate+"T00:00:00") - new Date(today()+"T00:00:00")) / 86400000);
+    if(diffDays>0){ ddayEl.textContent="D-"+diffDays; ddayEl.className="stat-value"; }
+    else if(diffDays===0){ ddayEl.textContent="D-DAY"; ddayEl.className="stat-value gold"; }
+    else{ ddayEl.textContent="D+"+(-diffDays); ddayEl.className="stat-value muted"; }
+  }
+  $("nextTestDate").addEventListener("change", function(){
+    if(this.value) localStorage.setItem(NEXTTESTKEY, this.value);
+    else localStorage.removeItem(NEXTTESTKEY);
+    renderHomeSummary();
+  });
+  $("clearNextTestBtn").addEventListener("click", function(){
+    localStorage.removeItem(NEXTTESTKEY);
+    $("nextTestDate").value="";
+    renderHomeSummary();
+  });
+  $("homeDdayCard").addEventListener("click", function(){
+    if(!localStorage.getItem(NEXTTESTKEY)) setTab("settings");
+  });
+  if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
+
   function renderCards(){
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
@@ -519,6 +590,7 @@
     Array.prototype.forEach.call(box.querySelectorAll(".ex-card"), function(b){
       b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
     });
+    renderHomeSummary();
   }
 
   // ---- detail screen ----
