@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-GS92TRPC2X"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-GS92TRPC2X');
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#F2F2F7">
@@ -1161,11 +1153,6 @@
   // small persistent corner badge instead of an intrusive auto-popup;
   // only shown to visitors who haven't installed the app yet
   if(isStandalone) $("installBadge").style.display="none";
-
-  // ---- analytics: tell installed-app opens apart from regular browser visits ----
-  if(typeof gtag==="function"){
-    gtag('event', isStandalone ? 'launch_standalone' : 'launch_browser');
-  }
 
   // ---- tab switching: quick fade-in on the incoming screen ----
   function setTab(name){
