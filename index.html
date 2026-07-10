@@ -136,34 +136,26 @@
   .stat-value.gold{color:var(--gold)}
   .stat-value.muted{color:var(--ink-faint)}
 
-  /* ---- record CTA + collapsible input ---- */
-  .btn-record{
-    width:100%; font-family:inherit; font-size:16px; font-weight:700;
-    border:1px solid var(--line); background:var(--surface); color:var(--ink);
-    padding:15px; border-radius:14px; cursor:pointer; margin:16px 0;
-    transition:transform .15s, background-color .3s, border-color .3s;
-  }
-  .btn-record:active{transform:scale(.98)}
-  .btn-record.on{background:var(--tint); border-color:var(--tint); color:#fff}
+  /* ---- always-visible, single-glance record input ---- */
   .input-card{
-    background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px;
+    background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px;
     margin-bottom:16px; transition:background-color .3s, border-color .3s;
-    animation:slideDown .28s cubic-bezier(.22,1,.36,1);
   }
-  @keyframes slideDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)}}
-  .detail-target{font-size:13px; color:var(--ink-dim); margin-bottom:12px}
-  .field-input{display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:14px}
+  .input-row{display:flex; align-items:center; gap:8px}
+  .input-row + .input-row{margin-top:8px}
+  .detail-target{font-size:12px; color:var(--ink-faint); margin-top:8px}
+  .field-input{display:flex; align-items:center; gap:6px; flex:1; min-width:0}
   .field-input input{
-    width:88px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
-    font-family:inherit; font-size:24px; font-weight:700; text-align:center;
-    font-variant-numeric:tabular-nums; border-radius:12px; padding:11px 4px; -moz-appearance:textfield;
+    width:100%; max-width:80px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-size:20px; font-weight:700; text-align:center;
+    font-variant-numeric:tabular-nums; border-radius:11px; padding:10px 4px; -moz-appearance:textfield;
     transition:background-color .3s, border-color .3s;
   }
   .field-input input::-webkit-outer-spin-button,.field-input input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   .field-input input:focus-visible{outline:2px solid var(--tint); outline-offset:1px}
-  .field-input .unit{font-size:14px; color:var(--ink-dim)}
-  .field-input .colon{font-size:24px; color:var(--ink-dim)}
-  .date-row{display:flex; gap:8px; margin-bottom:12px}
+  .field-input .unit{font-size:13px; color:var(--ink-dim)}
+  .field-input .colon{font-size:18px; color:var(--ink-dim)}
+  .input-row .btn{width:auto; flex:0 0 auto; padding:11px 20px; font-size:15px}
   .date-input{
     flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
     font-size:13px; border-radius:10px; padding:9px 10px;
@@ -372,21 +364,21 @@
       </div>
     </div>
 
-    <div class="graph-card">
-      <svg id="detailGraph" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>
-      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
-    </div>
-
-    <button class="btn-record" id="toggleInputBtn">+ 기록하기</button>
-
-    <div class="input-card" id="inputCard" hidden>
-      <div class="detail-target" id="detailTarget"></div>
-      <div class="date-row">
+    <div class="input-card" id="inputCard">
+      <div class="input-row">
         <input class="date-input" id="detailDate" type="date" aria-label="측정일">
         <button type="button" class="today-btn" id="todayBtn">오늘</button>
       </div>
-      <div class="field-input" id="detailInputWrap"></div>
-      <button class="btn" id="detailSaveBtn">기록 저장</button>
+      <div class="input-row">
+        <div class="field-input" id="detailInputWrap"></div>
+        <button class="btn" id="detailSaveBtn">저장</button>
+      </div>
+      <div class="detail-target" id="detailTarget"></div>
+    </div>
+
+    <div class="graph-card">
+      <svg id="detailGraph" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>
+      <div class="graph-empty" id="detailEmpty">아직 기록이 없습니다.<br>오늘의 첫 기록을 남겨보세요.</div>
     </div>
 
     <div class="group-label">기록 히스토리</div>
@@ -620,30 +612,18 @@
     return parseInt($("dIn1").value,10);
   }
 
-  function showInputCard(presetDate, presetVal){
+  function fillInputCard(presetDate, presetVal){
     $("detailDate").value = presetDate || localStorage.getItem(LASTDATEKEY) || today();
     buildInput(currentDetailKey, presetVal);
-    $("inputCard").hidden=false;
-    $("toggleInputBtn").classList.add("on");
-    $("toggleInputBtn").textContent="입력 취소";
-    $("inputCard").scrollIntoView({behavior:"smooth", block:"nearest"});
   }
   $("todayBtn").addEventListener("click", function(){ $("detailDate").value=today(); });
-  function hideInputCard(){
-    $("inputCard").hidden=true;
-    $("toggleInputBtn").classList.remove("on");
-    $("toggleInputBtn").textContent="+ 기록하기";
-  }
-  $("toggleInputBtn").addEventListener("click", function(){
-    if($("inputCard").hidden) showInputCard(); else hideInputCard();
-  });
 
   function openDetail(key){
     currentDetailKey=key;
     var ex=EXES[key];
     $("detailTitle").textContent=ex.emoji+" "+exName(key);
     $("detailTarget").textContent=targetText(key);
-    hideInputCard();
+    fillInputCard();
     renderStats(key);
     drawGraph(key);
     renderHistory(key);
@@ -670,7 +650,7 @@
     rec[key]=val; rec.age=age;
     persist();
     localStorage.setItem(LASTDATEKEY, dateStr);
-    hideInputCard();
+    buildInput(key); // clear the value field, keep the date for the next entry
     refreshDetail(key);
   });
 
@@ -717,7 +697,8 @@
         var d=b.getAttribute("data-date");
         var rec=records.filter(function(r){ return r.date===d; })[0];
         if(!rec) return;
-        showInputCard(d, rec[key]);
+        fillInputCard(d, rec[key]);
+        $("inputCard").scrollIntoView({behavior:"smooth", block:"center"});
       });
     });
     Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
