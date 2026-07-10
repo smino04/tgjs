@@ -51,19 +51,21 @@
 
   /* ---- exercise cards (기록 tab) ---- */
   .ex-card{
-    width:100%; display:flex; align-items:center; gap:18px; text-align:left;
-    background:var(--surface); border:1px solid var(--line); border-radius:22px;
-    padding:22px 20px; margin-bottom:14px; cursor:pointer;
+    width:100%; display:flex; flex-direction:column; gap:2px; text-align:left;
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--tint);
+    border-radius:22px; padding:20px 20px 18px; margin-bottom:14px; cursor:pointer;
     box-shadow:0 2px 10px rgba(0,0,0,.05);
     transition:background-color .3s, border-color .3s, transform .18s, box-shadow .18s;
     font-family:inherit; color:inherit;
     animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
   }
+  .ex-card.at-goal{border-left-color:var(--gold)}
   .ex-card:nth-child(1){animation-delay:.03s}
   .ex-card:nth-child(2){animation-delay:.09s}
   .ex-card:nth-child(3){animation-delay:.15s}
   @keyframes cardIn{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
   .ex-card:active{transform:scale(.975); box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .ex-card-top{display:flex; align-items:center; gap:18px; width:100%}
   .ex-icon{
     flex:0 0 auto; width:60px; height:60px; border-radius:17px;
     display:grid; place-items:center; background:var(--tint-bg);
@@ -71,9 +73,18 @@
   }
   .ex-body{flex:1; min-width:0}
   .ex-name{font-size:19px; font-weight:700; letter-spacing:-.01em}
-  .ex-meta{font-size:14px; color:var(--ink-dim); margin-top:4px}
-  .ex-meta.ok{color:var(--gold); font-weight:600}
+  .ex-meta{font-size:14px; color:var(--ink-dim); margin-top:4px; display:flex; align-items:center; gap:6px}
   .ex-chev{color:var(--ink-faint); font-size:22px; flex:0 0 auto}
+  .ex-progress{margin-top:14px; height:6px; border-radius:99px; background:var(--bg); overflow:hidden}
+  .ex-progress > i{display:block; height:100%; border-radius:99px; background:var(--tint); transition:width .5s cubic-bezier(.22,1,.36,1)}
+  .ex-progress.at-goal > i{background:var(--gold)}
+
+  /* ---- grade pill badge (brand-colored, reused everywhere a grade shows) ---- */
+  .grade-pill{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:700; line-height:1.6}
+  .grade-pill.g1{background:var(--gold-bg); color:var(--gold)}
+  .grade-pill.g2{background:var(--tint-bg); color:var(--tint)}
+  .grade-pill.g3{background:var(--line); color:var(--ink-dim)}
+  .grade-pill.g0{background:rgba(255,59,48,.12); color:var(--danger)}
 
   /* ---- ios grouped list ---- */
   .group{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; transition:background-color .3s, border-color .3s}
@@ -129,7 +140,10 @@
 
   /* ---- stat cards ---- */
   .stat-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px}
-  .stat-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; transition:background-color .3s, border-color .3s}
+  .stat-card{
+    background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--tint);
+    border-radius:16px; padding:13px 16px 14px; transition:background-color .3s, border-color .3s;
+  }
   .stat-label{font-size:12px; color:var(--ink-faint); margin-bottom:6px}
   .stat-value{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums}
   .stat-value .stat-unit{font-size:13px; font-weight:600; color:var(--ink-dim); margin-left:2px}
@@ -188,8 +202,6 @@
   .history-date{font-size:12px; color:var(--ink-dim); flex:0 0 42px; font-variant-numeric:tabular-nums}
   .history-main{flex:1; min-width:0; font-size:14px}
   .history-main b{font-weight:700}
-  .history-tag{color:var(--gold); font-weight:700; font-size:12px; margin-left:6px}
-  .history-tag.sub{color:var(--ink-faint)}
   .history-actions{flex:0 0 auto; display:flex; gap:6px}
   .history-actions button{
     font-family:inherit; font-size:12px; font-weight:600; border-radius:8px; padding:6px 10px;
@@ -474,6 +486,7 @@
     if(val>=g[0]) return 1; if(val>=g[1]) return 2; if(val>=g[2]) return 3; return 0;
   }
   function gradeLabel(gr){ return gr===0 ? "미달" : gr+"급"; }
+  function gradePill(gr){ return '<span class="grade-pill g'+gr+'">'+gradeLabel(gr)+'</span>'; }
   function passes(key, val){ return gradeOf(key, val)===1; }  // 1급 = 최고 등급
 
   // ---- theme (light / dark / system-auto) ----
@@ -561,22 +574,31 @@
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
 
+  function progressToGoal(key, val){
+    var target=topCut(key);
+    var p = EXES[key].isTime ? target/val : val/target;
+    return Math.max(0, Math.min(1, p));
+  }
   function renderCards(){
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
       var ex=EXES[key], rec=latestValue(key);
-      var meta, ok=false;
+      var meta, atGoal=false, progress=0;
       if(rec){
         var val=rec[key], gr=gradeOf(key,val);
-        ok=(gr===1);
-        meta=(ex.isTime?fmtRun(val):val+ex.unit)+" · "+gradeLabel(gr);
+        atGoal=(gr===1);
+        progress=progressToGoal(key,val);
+        meta=(ex.isTime?fmtRun(val):val+ex.unit)+' '+gradePill(gr);
       }else{
         meta="아직 기록이 없습니다";
       }
-      return '<button class="ex-card" data-ex="'+key+'">'
-        +'<div class="ex-icon">'+ex.emoji+'</div>'
-        +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta'+(ok?' ok':'')+'">'+meta+'</div></div>'
-        +'<div class="ex-chev">›</div>'
+      return '<button class="ex-card'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
+        +'<div class="ex-card-top">'
+          +'<div class="ex-icon">'+ex.emoji+'</div>'
+          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta">'+meta+'</div></div>'
+          +'<div class="ex-chev">›</div>'
+        +'</div>'
+        +'<div class="ex-progress'+(atGoal?' at-goal':'')+'"><i style="width:'+(progress*100).toFixed(0)+'%"></i></div>'
       +'</button>';
     }).join("");
     Array.prototype.forEach.call(box.querySelectorAll(".ex-card"), function(b){
@@ -682,10 +704,9 @@
     }
     box.innerHTML = pts.map(function(r){
       var val=r[key], gr=gradeOf(key,val);
-      var tag = gr===0 ? '' : '<span class="history-tag'+(gr===1?'':' sub')+'">'+gradeLabel(gr)+'</span>';
       return '<div class="history-row">'
         +'<div class="history-date">'+shortDate(r.date)+'</div>'
-        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+tag+'</div>'
+        +'<div class="history-main">'+(ex.isTime?fmtRun(val):val+ex.unit)+' '+gradePill(gr)+'</div>'
         +'<div class="history-actions">'
           +'<button class="edit" data-date="'+r.date+'">수정</button>'
           +'<button class="del" data-date="'+r.date+'">삭제</button>'
