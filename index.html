@@ -286,11 +286,15 @@
   .cal-day .cal-dots span.gold{background:var(--gold)}
   .cal-day.selected .cal-dots span{background:#fff; opacity:.85}
   .cal-detail-row{
-    display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
-    border-radius:14px; padding:12px 14px; margin-bottom:9px; transition:background-color .3s, border-color .3s;
+    width:100%; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px; margin-bottom:9px; transition:background-color .3s, border-color .3s, transform .15s;
+    font-family:inherit; color:inherit; cursor:pointer; text-align:left;
   }
+  .cal-detail-row:active{transform:scale(.98)}
   .cal-detail-row .emoji{font-size:20px}
   .cal-detail-row .name{font-size:14px; font-weight:700; flex:1}
+  .cal-detail-row .val.prompt{color:var(--tint); font-weight:600; font-size:13px}
+  .cal-detail-row.empty{border-style:dashed}
   .cal-detail-row .val{font-size:14px; font-variant-numeric:tabular-nums}
 
   /* ---- flat bottom tab bar ---- */
@@ -719,27 +723,36 @@
 
   function renderCalDetail(dateStr){
     var box=$("calDetail");
-    var recs=recordsOnDate(dateStr);
-    var entries=[];
-    recs.forEach(function(r){
-      Object.keys(EXES).forEach(function(k){
-        if(typeof r[k]==="number") entries.push({key:k, val:r[k]});
+    var rec=recordsOnDate(dateStr)[0];
+    var label=dateStr===today() ? "오늘 ("+shortDate(dateStr)+")" : shortDate(dateStr);
+
+    box.innerHTML = '<div class="row-desc" style="margin:0 0 8px 2px">'+label+' · 눌러서 입력·수정</div>' + Object.keys(EXES).map(function(key){
+      var ex=EXES[key];
+      var val = rec ? rec[key] : undefined;
+      if(typeof val==="number"){
+        var gr=gradeOf(key,val);
+        return '<button type="button" class="cal-detail-row" data-ex="'+key+'">'
+          +'<span class="emoji">'+ex.emoji+'</span>'
+          +'<span class="name">'+exName(key)+'</span>'
+          +'<span class="val">'+(ex.isTime?fmtRun(val):val+ex.unit)+'</span>'
+          +gradePill(gr)
+        +'</button>';
+      }
+      return '<button type="button" class="cal-detail-row empty" data-ex="'+key+'">'
+        +'<span class="emoji">'+ex.emoji+'</span>'
+        +'<span class="name">'+exName(key)+'</span>'
+        +'<span class="val prompt">입력하기</span>'
+        +'<span class="ex-chev">›</span>'
+      +'</button>';
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".cal-detail-row"), function(b){
+      b.addEventListener("click", function(){
+        var key=b.getAttribute("data-ex");
+        var v = rec && typeof rec[key]==="number" ? rec[key] : null;
+        openDetail(key, dateStr, v);
       });
     });
-    var label=dateStr===today() ? "오늘 ("+shortDate(dateStr)+")" : shortDate(dateStr);
-    if(!entries.length){
-      box.innerHTML='<div class="graph-empty" style="padding:16px"><div class="empty-sub">'+label+'에는 기록이 없어요</div></div>';
-      return;
-    }
-    box.innerHTML = '<div class="row-desc" style="margin:0 0 8px 2px">'+label+'</div>' + entries.map(function(e){
-      var ex=EXES[e.key], gr=gradeOf(e.key,e.val);
-      return '<div class="cal-detail-row">'
-        +'<span class="emoji">'+ex.emoji+'</span>'
-        +'<span class="name">'+exName(e.key)+'</span>'
-        +'<span class="val">'+(ex.isTime?fmtRun(e.val):e.val+ex.unit)+'</span>'
-        +gradePill(gr)
-      +'</div>';
-    }).join("");
   }
 
   $("calPrev").addEventListener("click", function(){
@@ -784,13 +797,13 @@
   }
   $("todayBtn").addEventListener("click", function(){ $("detailDate").value=today(); });
 
-  function openDetail(key){
+  function openDetail(key, presetDate, presetVal){
     currentDetailKey=key;
     var ex=EXES[key];
     $("detailTitle").textContent=ex.emoji+" "+exName(key);
     $("detailTarget").textContent=targetText(key);
     $("emptyBadge").textContent=ex.emoji;
-    fillInputCard();
+    fillInputCard(presetDate, presetVal);
     renderStats(key);
     drawGraph(key);
     renderHistory(key);
