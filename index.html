@@ -224,6 +224,17 @@
   @keyframes splash-in{0%{transform:scale(.72); opacity:0}55%{transform:scale(1.04); opacity:1}100%{transform:scale(1); opacity:1}}
   @keyframes splash-out{0%{transform:scale(1); opacity:1}100%{transform:scale(1.08); opacity:0}}
 
+  /* ---- floating "앱 설치" badge ---- */
+  .install-badge{
+    position:fixed; right:14px; bottom:calc(env(safe-area-inset-bottom,10px) + 82px); z-index:490;
+    display:flex; align-items:center; gap:5px; background:var(--tint); color:#fff;
+    border:0; border-radius:999px; padding:9px 14px 9px 12px; font-family:inherit;
+    font-size:12.5px; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,.22); cursor:pointer;
+    animation:installBadgeIn .4s cubic-bezier(.22,1,.36,1) .6s backwards;
+  }
+  @keyframes installBadgeIn{from{opacity:0; transform:translateY(10px) scale(.9)} to{opacity:1; transform:translateY(0) scale(1)}}
+  .install-badge:active{transform:scale(.94)}
+
   /* ---- add-to-home-screen modal ---- */
   .modal-backdrop{
     position:fixed; inset:0; z-index:900; background:rgba(0,0,0,.45);
@@ -474,6 +485,11 @@
     </div>
   </div>
 </div>
+
+<!-- ============ 앱 설치 배지 ============ -->
+<button type="button" class="install-badge" id="installBadge">
+  <span class="tab-emoji" style="font-size:16px">📲</span> 앱 설치
+</button>
 
 <!-- ============ 홈 화면 추가 안내 ============ -->
 <div class="modal-backdrop" id="a2hsBackdrop">
@@ -1018,7 +1034,6 @@
   });
 
   // ---- add-to-home-screen guide ----
-  var A2HSKEY="teukup_a2hs_seen_v1";
   var ua=navigator.userAgent;
   var isIOS=/iPad|iPhone|iPod/.test(ua) && !window.MSStream;
   var isAndroid=/Android/.test(ua);
@@ -1037,15 +1052,15 @@
   }
   function closeA2HS(){
     $("a2hsBackdrop").classList.remove("open");
-    localStorage.setItem(A2HSKEY, "1");
   }
   $("a2hsRow").addEventListener("click", openA2HS);
+  $("installBadge").addEventListener("click", openA2HS);
   $("a2hsClose").addEventListener("click", closeA2HS);
   $("a2hsBackdrop").addEventListener("click", function(e){ if(e.target===$("a2hsBackdrop")) closeA2HS(); });
 
-  if(!isStandalone && !localStorage.getItem(A2HSKEY)){
-    setTimeout(openA2HS, 3000);
-  }
+  // small persistent corner badge instead of an intrusive auto-popup;
+  // only shown to visitors who haven't installed the app yet
+  if(isStandalone) $("installBadge").style.display="none";
 
   // ---- tab switching: quick fade-in on the incoming screen ----
   function setTab(name){
