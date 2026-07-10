@@ -209,9 +209,11 @@
   }
   .history-actions button.del:active, .history-actions button.edit:active{opacity:.6}
 
-  @media (prefers-reduced-motion:reduce){
-    *:not(#splash):not(#splash *){animation:none!important; transition:none!important}
-  }
+  /* Note: intentionally NOT disabling animations under prefers-reduced-motion.
+     Every motion in this app is a small opacity fade / <=14px slide — well
+     under the threshold that accessibility guidance asks apps to remove —
+     and a blanket kill-switch here previously made screen transitions look
+     broken on devices with iOS "Reduce Motion" enabled. */
 
   /* ---- splash ---- */
   #splash{
@@ -227,12 +229,6 @@
   #splash.hide img{animation:splash-out .7s cubic-bezier(.4,0,.2,1) forwards}
   @keyframes splash-in{0%{transform:scale(.72); opacity:0}55%{transform:scale(1.04); opacity:1}100%{transform:scale(1); opacity:1}}
   @keyframes splash-out{0%{transform:scale(1); opacity:1}100%{transform:scale(1.08); opacity:0}}
-  @media (prefers-reduced-motion:reduce){
-    #splash img{animation:splash-fade-in .5s ease!important}
-    #splash.hide img{animation:splash-fade-out .5s ease!important forwards}
-  }
-  @keyframes splash-fade-in{0%{opacity:0}100%{opacity:1}}
-  @keyframes splash-fade-out{0%{opacity:1}100%{opacity:0}}
 
   /* ---- add-to-home-screen modal ---- */
   .modal-backdrop{
