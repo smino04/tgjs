@@ -73,12 +73,9 @@
   }
   .ex-body{flex:1; min-width:0}
   .ex-name{font-size:19px; font-weight:700; letter-spacing:-.01em}
-  .ex-meta{font-size:14px; color:var(--ink-dim); margin-top:4px; display:flex; align-items:center; gap:6px}
-  .ex-meta.empty{color:var(--tint); font-weight:600}
   .ex-chev{color:var(--ink-faint); font-size:22px; flex:0 0 auto}
-  .ex-progress{margin-top:14px; height:6px; border-radius:99px; background:var(--bg); overflow:hidden}
-  .ex-progress > i{display:block; height:100%; border-radius:99px; background:var(--tint); transition:width .5s cubic-bezier(.22,1,.36,1)}
-  .ex-progress.at-goal > i{background:var(--gold)}
+  .trend-svg{width:100%; height:auto; display:block; overflow:visible; margin-top:14px}
+  .trend-svg text{font-family:inherit; font-variant-numeric:tabular-nums}
 
   /* ---- grade pill badge (brand-colored, reused everywhere a grade shows) ---- */
   .grade-pill{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:700; line-height:1.6}
@@ -348,9 +345,16 @@
 <div class="wrap">
 <div class="screens-strip" id="screensStrip">
 
-  <!-- ============ 기록 화면 ============ -->
-  <section class="screen active" id="screen-record">
-    <div class="page-header"><h1>기록</h1></div>
+  <!-- ============ 기록 화면 (성장 추이) ============ -->
+  <section class="screen" id="screen-record">
+    <div class="page-header"><h1>성장 추이</h1></div>
+    <div id="exCards"></div>
+  </section>
+
+  <!-- ============ 캘린더 화면 ============ -->
+  <section class="screen active" id="screen-calendar">
+    <div class="page-header"><h1>캘린더</h1></div>
+
     <div class="streak-banner" id="streakBanner" style="display:none">
       🔥 <span id="streakCount">0</span>일 연속 기록 중
     </div>
@@ -364,12 +368,6 @@
         <div class="stat-value" id="homeDday">—</div>
       </div>
     </div>
-    <div id="exCards"></div>
-  </section>
-
-  <!-- ============ 캘린더 화면 ============ -->
-  <section class="screen" id="screen-calendar">
-    <div class="page-header"><h1>캘린더</h1></div>
 
     <div class="cal-nav">
       <button type="button" id="calPrev" aria-label="이전 달">‹</button>
@@ -453,7 +451,7 @@
 <!-- ============ 종목 상세 (슬라이드 화면) ============ -->
 <div class="detail" id="detail">
   <div class="detail-nav">
-    <button class="detail-back" id="detailBack">‹ 기록</button>
+    <button class="detail-back" id="detailBack">‹ 뒤로</button>
     <span class="detail-title" id="detailTitle">팔굽혀펴기</span>
     <div class="detail-spacer"></div>
   </div>
@@ -534,13 +532,13 @@
 </div>
 
 <nav class="tabbar" id="tabbar" role="tablist" aria-label="화면 전환">
-  <button data-tab="record" class="active" role="tab" aria-selected="true">
-    <span class="tab-emoji">📋</span>
-    기록
-  </button>
-  <button data-tab="calendar" role="tab" aria-selected="false">
+  <button data-tab="calendar" class="active" role="tab" aria-selected="true">
     <span class="tab-emoji">📅</span>
     캘린더
+  </button>
+  <button data-tab="record" role="tab" aria-selected="false">
+    <span class="tab-emoji">📈</span>
+    성장 추이
   </button>
   <button data-tab="settings" role="tab" aria-selected="false">
     <span class="tab-emoji">⚙️</span>
@@ -703,35 +701,26 @@
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
 
-  function progressToGoal(key, val){
-    var target=topCut(key);
-    var p = EXES[key].isTime ? target/val : val/target;
-    return Math.max(0, Math.min(1, p));
-  }
   function renderCards(){
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
-      var ex=EXES[key], rec=latestValue(key);
-      var meta, atGoal=false, progress=0;
-      if(rec){
-        var val=rec[key], gr=gradeOf(key,val);
-        atGoal=(gr===1);
-        progress=progressToGoal(key,val);
-        meta=(ex.isTime?fmtRun(val):val+ex.unit)+' '+gradePill(gr);
-      }else{
-        meta="첫 기록을 남겨보세요 →";
-      }
+      var ex=EXES[key], rec=latestValue(key), atGoal=false;
+      if(rec) atGoal=(gradeOf(key,rec[key])===1);
       return '<button class="ex-card'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
-          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div><div class="ex-meta'+(rec?'':' empty')+'">'+meta+'</div></div>'
+          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div></div>'
           +'<div class="ex-chev">›</div>'
         +'</div>'
-        +'<div class="ex-progress'+(atGoal?' at-goal':'')+'"><i style="width:'+(progress*100).toFixed(0)+'%"></i></div>'
+        +'<svg class="trend-svg" id="trendGraph-'+key+'" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>'
+        +'<div class="graph-empty" id="trendEmpty-'+key+'" style="padding:16px"><div class="empty-sub">아직 기록이 없어요 — 탭해서 첫 기록을 남겨보세요</div></div>'
       +'</button>';
     }).join("");
     Array.prototype.forEach.call(box.querySelectorAll(".ex-card"), function(b){
       b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
+    });
+    Object.keys(EXES).forEach(function(key){
+      drawGraph(key, $("trendGraph-"+key), $("trendEmpty-"+key));
     });
     renderHomeSummary();
     renderStreak();
@@ -994,11 +983,11 @@
   }
   function shortDate(d){ return d ? d.slice(5).replace("-","/") : ""; }
 
-  function drawGraph(key){
+  function drawGraph(key, svg, empty){
+    svg = svg || $("detailGraph"); empty = empty || $("detailEmpty");
     var ex=EXES[key];
     var pts = records.filter(function(r){ return typeof r[key]==="number"; })
       .sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
-    var svg=$("detailGraph"), empty=$("detailEmpty");
 
     if(!pts.length){
       svg.style.display="none"; empty.style.display="block";
@@ -1176,7 +1165,7 @@
 
   // ---- init ----
   renderCards();
-  setTab("record");
+  setTab("calendar");
 
   // ---- splash screen ----
   setTimeout(function(){
