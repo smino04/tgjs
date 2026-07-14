@@ -154,6 +154,8 @@
   .stat-value .stat-unit{font-size:13px; font-weight:600; color:var(--ink-dim); margin-left:2px}
   .stat-value.gold{color:var(--gold)}
   .stat-value.muted{color:var(--ink-faint)}
+  .stat-value.cta{color:var(--tint)}
+  .stat-sub{font-size:11px; color:var(--ink-faint); margin-top:4px; min-height:14px}
 
   /* ---- always-visible, single-glance record input ---- */
   .input-card{
@@ -345,6 +347,26 @@
   .tabbar button.active{color:var(--tint)}
   .tabbar button.active .tab-emoji{filter:none}
   .tabbar button:active{transform:scale(.94)}
+
+  /* ---- desktop/web framing: every position:fixed element (tabbar, overlays,
+     toasts, badges) already anchors to the real viewport, so scroll-pinning
+     keeps working untouched. We just width-cap + center each one to match
+     .wrap's 520px column instead of stretching edge to edge, so the web
+     experience reads like the mobile app instead of a generic wide page.
+     This block is intentionally last so it wins the cascade against every
+     unconditional rule above with equal selector specificity. ---- */
+  @media (min-width:560px){
+    body{background:#0b0b0d}
+    .wrap{
+      background:var(--bg); min-height:calc(100vh - 28px);
+      border-radius:28px 28px 0 0; overflow:hidden; margin-top:28px;
+    }
+    .tabbar, #splash, .detail, .confetti-burst, .modal-backdrop{
+      max-width:520px; margin-left:auto; margin-right:auto;
+    }
+    .tabbar{border-radius:0 0 28px 28px; box-shadow:0 30px 80px rgba(0,0,0,.5)}
+    .install-badge{right:calc((100vw - 520px) / 2 + 14px)}
+  }
 </style>
 </head>
 <body>
@@ -363,10 +385,12 @@
       <div class="stat-card">
         <div class="stat-label">종합 등급</div>
         <div class="stat-value" id="homeGrade">—</div>
+        <div class="stat-sub" id="homeGradeSub"></div>
       </div>
       <div class="stat-card" id="homeDdayCard" style="cursor:pointer">
         <div class="stat-label">다음 측정</div>
         <div class="stat-value" id="homeDday">—</div>
+        <div class="stat-sub" id="homeDdaySub"></div>
       </div>
     </div>
 
@@ -698,7 +722,8 @@
 
   // ---- home summary: overall grade + next-test D-day ----
   function renderHomeSummary(){
-    var gradeEl=$("homeGrade"), ddayEl=$("homeDday"), ddayCard=$("homeDdayCard");
+    var gradeEl=$("homeGrade"), gradeSub=$("homeGradeSub");
+    var ddayEl=$("homeDday"), ddaySub=$("homeDdaySub");
 
     var keys=Object.keys(EXES), have=[], grades=[];
     keys.forEach(function(k){
@@ -706,21 +731,26 @@
       if(rec){ have.push(k); grades.push(gradeOf(k, rec[k])); }
     });
     if(have.length===0){
-      gradeEl.textContent="—"; gradeEl.className="stat-value muted";
+      gradeEl.textContent="도전 시작"; gradeEl.className="stat-value cta";
+      gradeSub.textContent="첫 기록을 남겨보세요";
     }else if(have.length<keys.length){
       gradeEl.textContent=have.length+"/"+keys.length+" 종목";
       gradeEl.className="stat-value";
+      gradeSub.textContent="아직 기록 안 한 종목 있음";
     }else{
       var worst=Math.min.apply(null, grades); // scale is 0(불합격)..4(특급), lower = worse
       gradeEl.textContent = worst===4 ? "특급전사!" : gradeLabel(worst);
       gradeEl.className="stat-value"+(worst===4?" gold":(worst===0?" muted":""));
+      gradeSub.textContent = worst===4 ? "3종목 모두 특급 달성" : "가장 낮은 종목 기준";
     }
 
     var nextDate=localStorage.getItem(NEXTTESTKEY);
     if(!nextDate){
-      ddayEl.textContent="설정하기"; ddayEl.className="stat-value muted";
+      ddayEl.textContent="설정하기"; ddayEl.className="stat-value cta";
+      ddaySub.textContent="측정일을 등록해보세요";
       return;
     }
+    ddaySub.textContent="";
     var diffDays=Math.round((new Date(nextDate+"T00:00:00") - new Date(today()+"T00:00:00")) / 86400000);
     if(diffDays>0){ ddayEl.textContent="D-"+diffDays; ddayEl.className="stat-value"; }
     else if(diffDays===0){ ddayEl.textContent="D-DAY"; ddayEl.className="stat-value gold"; }
