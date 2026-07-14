@@ -60,6 +60,8 @@
     animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
   }
   .ex-card.at-goal{border-left-color:var(--gold)}
+  .ex-card.today-card.done{border-left-color:var(--line)}
+  .ex-card.today-card .ex-card-top .grade-pill{flex:0 0 auto}
   .ex-card:nth-child(1){animation-delay:.03s}
   .ex-card:nth-child(2){animation-delay:.09s}
   .ex-card:nth-child(3){animation-delay:.15s}
@@ -350,15 +352,9 @@
 <div class="wrap">
 <div class="screens-strip" id="screensStrip">
 
-  <!-- ============ 기록 화면 (성장 추이) ============ -->
-  <section class="screen" id="screen-record">
-    <div class="page-header"><h1>성장 추이</h1></div>
-    <div id="exCards"></div>
-  </section>
-
-  <!-- ============ 캘린더 화면 ============ -->
-  <section class="screen active" id="screen-calendar">
-    <div class="page-header"><h1>캘린더</h1></div>
+  <!-- ============ 홈 화면 (오늘의 특급 현황판) ============ -->
+  <section class="screen active" id="screen-home">
+    <div class="page-header"><h1>홈</h1></div>
 
     <div class="streak-banner" id="streakBanner" style="display:none">
       🔥 <span id="streakCount">0</span>일 연속 기록 중
@@ -374,16 +370,35 @@
       </div>
     </div>
 
-    <div class="cal-nav">
-      <button type="button" id="calPrev" aria-label="이전 달">‹</button>
-      <div class="cal-title" id="calTitle">2026년 7월</div>
-      <button type="button" id="calNext" aria-label="다음 달">›</button>
+    <div class="group-label" id="todayProgress">오늘 0/3 종목 기록 완료</div>
+    <div id="todayCards"></div>
+  </section>
+
+  <!-- ============ 성장 추이 화면 (추이 그래프 / 캘린더) ============ -->
+  <section class="screen" id="screen-record">
+    <div class="page-header"><h1>성장 추이</h1></div>
+
+    <div class="segmented" id="recordViewSeg" role="group" aria-label="보기 방식 선택" style="margin-bottom:16px">
+      <button data-view="trend" aria-pressed="true">추이</button>
+      <button data-view="calendar" aria-pressed="false">캘린더</button>
     </div>
 
-    <div class="cal-grid" id="calGrid"></div>
+    <div id="recordTrendView">
+      <div id="exCards"></div>
+    </div>
 
-    <div class="group-label">기록 상세</div>
-    <div id="calDetail"></div>
+    <div id="recordCalendarView" style="display:none">
+      <div class="cal-nav">
+        <button type="button" id="calPrev" aria-label="이전 달">‹</button>
+        <div class="cal-title" id="calTitle">2026년 7월</div>
+        <button type="button" id="calNext" aria-label="다음 달">›</button>
+      </div>
+
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="group-label">기록 상세</div>
+      <div id="calDetail"></div>
+    </div>
   </section>
 
   <!-- ============ 설정 화면 ============ -->
@@ -538,9 +553,9 @@
 </div>
 
 <nav class="tabbar" id="tabbar" role="tablist" aria-label="화면 전환">
-  <button data-tab="calendar" class="active" role="tab" aria-selected="true">
-    <span class="tab-emoji">📅</span>
-    캘린더
+  <button data-tab="home" class="active" role="tab" aria-selected="true">
+    <span class="tab-emoji">🏠</span>
+    홈
   </button>
   <button data-tab="record" role="tab" aria-selected="false">
     <span class="tab-emoji">📈</span>
@@ -748,7 +763,7 @@
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
 
-  function renderCards(){
+  function renderTrendCards(){
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
       var ex=EXES[key], rec=latestValue(key), atGoal=false;
@@ -769,6 +784,43 @@
     Object.keys(EXES).forEach(function(key){
       drawGraph(key, $("trendGraph-"+key), $("trendEmpty-"+key));
     });
+  }
+
+  // ---- home screen: today's status cards (탭 한 번으로 오늘 입력) ----
+  function renderTodayCards(){
+    var box=$("todayCards"), todayStr=today(), keys=Object.keys(EXES), doneCount=0;
+    var rec=records.filter(function(r){ return r.date===todayStr; })[0];
+    box.innerHTML = keys.map(function(key){
+      var ex=EXES[key];
+      var val = rec && typeof rec[key]==="number" ? rec[key] : null;
+      var done = val!=null;
+      if(done) doneCount++;
+      var gr = done ? gradeOf(key,val) : null;
+      return '<button class="ex-card today-card'+(done?' done':'')+(gr===4?' at-goal':'')+'" data-ex="'+key+'">'
+        +'<div class="ex-card-top">'
+          +'<div class="ex-icon">'+ex.emoji+'</div>'
+          +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div>'
+          +(done
+            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+'</div>'
+            : '<div class="row-desc" style="color:var(--tint); font-weight:600">탭해서 오늘 기록 입력</div>')
+          +'</div>'
+          +(done ? gradePill(gr) : '<div class="ex-chev">›</div>')
+        +'</div>'
+      +'</button>';
+    }).join("");
+    $("todayProgress").textContent = "오늘 "+doneCount+"/"+keys.length+" 종목 기록 완료";
+    Array.prototype.forEach.call(box.querySelectorAll(".today-card"), function(b){
+      b.addEventListener("click", function(){
+        var key=b.getAttribute("data-ex");
+        var v = rec && typeof rec[key]==="number" ? rec[key] : null;
+        openDetail(key, todayStr, v);
+      });
+    });
+  }
+
+  function renderAll(){
+    renderTrendCards();
+    renderTodayCards();
     renderHomeSummary();
     renderStreak();
     renderCalendar();
@@ -859,7 +911,7 @@
         var key=b.getAttribute("data-ex");
         if(!confirm(shortDate(dateStr)+" "+exName(key)+" 기록을 삭제할까요?")) return;
         deleteExerciseValue(key, dateStr);
-        renderCards();
+        renderAll();
       });
     });
   }
@@ -871,6 +923,18 @@
   $("calNext").addEventListener("click", function(){
     calState.month++; if(calState.month>11){ calState.month=0; calState.year++; }
     renderCalendar();
+  });
+
+  // ---- record screen: 추이 / 캘린더 view toggle ----
+  Array.prototype.forEach.call($("recordViewSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      var view=b.getAttribute("data-view");
+      Array.prototype.forEach.call($("recordViewSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      $("recordTrendView").style.display = view==="trend" ? "" : "none";
+      $("recordCalendarView").style.display = view==="calendar" ? "" : "none";
+    });
   });
 
   // ---- detail screen ----
@@ -923,7 +987,7 @@
   $("detailBack").addEventListener("click", closeDetail);
 
   function refreshDetail(key){
-    renderCards();
+    renderAll();
     renderStats(key);
     drawGraph(key);
   }
@@ -1111,7 +1175,7 @@
   }
   function onStandardChange(){
     updateStdRowDesc();
-    renderCards();
+    renderAll();
     if(currentDetailKey){
       $("detailTitle").textContent=EXES[currentDetailKey].emoji+" "+exName(currentDetailKey);
       $("detailTarget").textContent=targetText(currentDetailKey);
@@ -1153,7 +1217,7 @@
   $("wipeBtn").addEventListener("click", function(){
     if(!records.length) return;
     if(confirm("저장된 모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
-      records=[]; persist(); renderCards();
+      records=[]; persist(); renderAll();
       if(currentDetailKey) drawGraph(currentDetailKey);
     }
   });
@@ -1208,8 +1272,8 @@
   });
 
   // ---- init ----
-  renderCards();
-  setTab("calendar");
+  renderAll();
+  setTab("home");
 
   // ---- splash screen ----
   setTimeout(function(){
