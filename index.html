@@ -30,6 +30,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="특급전사">
 <link rel="manifest" href="manifest.json">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-G4S1XTJ5Q1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-G4S1XTJ5Q1');
+</script>
 <style>
   :root{
     --bg:#F2F2F7; --surface:#FFFFFF; --line:#E3E3E8;
@@ -1366,6 +1375,19 @@
   // small persistent corner badge instead of an intrusive auto-popup;
   // only shown to visitors who haven't installed the app yet
   if(isStandalone) $("installBadge").style.display="none";
+
+  // ---- analytics: tag each open with how it was launched ----
+  // "standalone" = opened from the home-screen app (best proxy for installs,
+  // since iOS Safari never fires a real install event); "browser" = web.
+  var launchMode = isStandalone ? "standalone" : "browser";
+  var platform = isIOS ? "ios" : (isAndroid ? "android" : "other");
+  if(window.gtag){
+    gtag("event", "app_open", { mode: launchMode, platform: platform });
+  }
+  // Android/Chrome fires this when the user actually installs the PWA.
+  window.addEventListener("appinstalled", function(){
+    if(window.gtag) gtag("event", "app_installed", { platform: platform });
+  });
 
   // ---- tab switching: quick fade-in on the incoming screen ----
   function setTab(name){
