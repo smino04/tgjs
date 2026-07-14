@@ -3,8 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="theme-color" content="#F2F2F7" id="themeColorMeta">
 <title>특급전사 — 체측 트래킹 앱</title>
+<meta name="description" content="국군 체력검정 기준표 그대로. 팔굽혀펴기·윗몸일으키기·3km 달리기 기록하고 특급/1급/2급/3급을 자동 판정. 성별·연령별 기준으로 특급전사까지 트래킹하세요.">
+
+<!-- Open Graph / 카톡·Threads·인스타 링크 미리보기 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="특급전사">
+<meta property="og:title" content="특급전사 — 체측 트래킹 앱">
+<meta property="og:description" content="국군 체력검정 기준 그대로. 기록만 넣으면 특급/1급/2급/3급 자동 판정. 특급전사까지 트래킹하세요.">
+<meta property="og:url" content="https://smino04.github.io/tgjs/">
+<meta property="og:image" content="https://smino04.github.io/tgjs/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:locale" content="ko_KR">
+
+<!-- Twitter/X 카드 -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="특급전사 — 체측 트래킹 앱">
+<meta name="twitter:description" content="국군 체력검정 기준 그대로. 기록만 넣으면 특급/1급/2급/3급 자동 판정.">
+<meta name="twitter:image" content="https://smino04.github.io/tgjs/icon-512.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -733,7 +751,12 @@
   var THEME_LABELS={light:"라이트", dark:"다크", system:"자동"};
   function applyTheme(pref){
     themePref = pref;
-    document.documentElement.setAttribute("data-theme", resolveTheme(pref));
+    var resolved = resolveTheme(pref);
+    document.documentElement.setAttribute("data-theme", resolved);
+    // keep the browser/PWA status-bar color in sync with the active theme,
+    // including the in-app override (media-query metas can't see that)
+    var meta=$("themeColorMeta");
+    if(meta) meta.setAttribute("content", resolved==="dark" ? "#000000" : "#F2F2F7");
     Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
       b.setAttribute("aria-pressed", b.getAttribute("data-theme-pref")===pref ? "true" : "false");
     });
@@ -1102,6 +1125,10 @@
   $("detailSaveBtn").addEventListener("click", function(){
     var key=currentDetailKey, val=readInputValue(key);
     if(isNaN(val)){ alert("값을 입력해야 저장됩니다."); return; }
+    if(val<=0){
+      alert(EXES[key].isTime ? "달리기 기록을 확인해주세요." : "기록을 확인해주세요.");
+      return;
+    }
     var dateStr=$("detailDate").value || today();
     var rec = records.filter(function(r){ return r.date===dateStr; })[0];
     if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
@@ -1365,11 +1392,16 @@
   setTab("home");
 
   // ---- splash screen ----
+  // Full (but trimmed) brand moment on the first open of a session; near-instant
+  // on same-session reloads so daily/return use isn't gated behind a long wait.
+  var splashSeen = false;
+  try{ splashSeen = sessionStorage.getItem("teukup_splash_seen")==="1"; }catch(e){}
   setTimeout(function(){
     var splash=$("splash");
     splash.classList.add("hide");
     splash.addEventListener("transitionend", function(){ splash.remove(); }, {once:true});
-  }, 2600);
+  }, splashSeen ? 250 : 1500);
+  try{ sessionStorage.setItem("teukup_splash_seen", "1"); }catch(e){}
 })();
 
 // ---- service worker: keep the home-screen app auto-updating ----
