@@ -98,6 +98,13 @@
   .row .row-desc{font-size:12px; color:var(--ink-faint); margin-top:2px}
   .row.danger{cursor:pointer}
   .row.danger .row-label{color:var(--danger); font-weight:600}
+  .row.row-icon{justify-content:flex-start}
+  .row-icon-badge{
+    flex:0 0 auto; width:34px; height:34px; border-radius:10px;
+    display:grid; place-items:center; font-size:17px; line-height:1;
+  }
+  .row-icon .row-text{flex:1; min-width:0}
+  .row-icon .ex-chev{flex:0 0 auto}
 
   /* ---- segmented ---- */
   .segmented{display:flex; gap:3px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:3px}
@@ -429,53 +436,47 @@
   <section class="screen" id="screen-settings">
     <div class="page-header"><h1>설정</h1></div>
 
-    <div class="group-label">기준</div>
+    <div class="group-label">환경설정</div>
     <div class="group">
-      <div class="row" id="stdRow" style="cursor:pointer">
-        <div>
+      <div class="row row-icon" id="stdRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:var(--tint-bg)">📏</div>
+        <div class="row-text">
           <div class="row-label">성별 · 연령 기준</div>
           <div class="row-desc" id="stdRowDesc">남군 · 25세 이하</div>
         </div>
         <span class="ex-chev">›</span>
       </div>
-    </div>
-
-    <div class="group-label">일정</div>
-    <div class="group">
-      <div class="row">
-        <div>
+      <div class="row row-icon" id="scheduleRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:rgba(23,109,222,.12)">📅</div>
+        <div class="row-text">
           <div class="row-label">다음 측정일</div>
-          <div class="row-desc">홈 화면에 D-day로 표시됩니다</div>
+          <div class="row-desc" id="scheduleRowDesc">설정 안 됨</div>
         </div>
-        <input class="date-input" id="nextTestDate" type="date" style="width:auto; margin:0" aria-label="다음 측정일">
+        <span class="ex-chev">›</span>
       </div>
-      <div class="row danger" id="clearNextTestBtn" style="cursor:pointer">
-        <div class="row-label">측정일 지우기</div>
-      </div>
-    </div>
-
-    <div class="group-label">화면</div>
-    <div class="segmented" id="themeSeg" role="group" aria-label="화면 모드 선택">
-      <button data-theme-pref="light" aria-pressed="true">라이트</button>
-      <button data-theme-pref="dark" aria-pressed="false">다크</button>
-      <button data-theme-pref="system" aria-pressed="false">자동</button>
-    </div>
-
-    <div class="group-label">도움말</div>
-    <div class="group">
-      <div class="row" id="a2hsRow" style="cursor:pointer">
-        <div>
-          <div class="row-label">홈 화면에 추가하는 방법</div>
-          <div class="row-desc">아이폰 · 갤럭시(안드로이드) 안내</div>
+      <div class="row row-icon" id="themeRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:var(--gold-bg)">🎨</div>
+        <div class="row-text">
+          <div class="row-label">화면 모드</div>
+          <div class="row-desc" id="themeRowDesc">자동</div>
         </div>
         <span class="ex-chev">›</span>
       </div>
     </div>
 
-    <div class="group-label">데이터</div>
+    <div class="group-label">기타</div>
     <div class="group">
-      <div class="row danger" id="wipeBtn">
-        <div>
+      <div class="row row-icon" id="a2hsRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:rgba(23,109,222,.12)">❓</div>
+        <div class="row-text">
+          <div class="row-label">홈 화면에 추가하는 방법</div>
+          <div class="row-desc">아이폰 · 갤럭시(안드로이드) 안내</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </div>
+      <div class="row row-icon danger" id="wipeBtn">
+        <div class="row-icon-badge" style="background:rgba(255,59,48,.12)">🗑️</div>
+        <div class="row-text">
           <div class="row-label">전체 기록 삭제</div>
           <div class="row-desc">저장된 모든 측정 기록을 이 기기에서 삭제합니다</div>
         </div>
@@ -555,6 +556,47 @@
         <div class="row-label">연령</div>
         <select id="ageSelect" class="age-select"></select>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 일정 설정 (슬라이드 화면) ============ -->
+<div class="detail" id="scheduleDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="scheduleBack">‹ 설정</button>
+    <span class="detail-title">일정</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="group-label">다음 측정일</div>
+    <div class="group">
+      <div class="row">
+        <div>
+          <div class="row-label">다음 측정일</div>
+          <div class="row-desc">홈 화면에 D-day로 표시됩니다</div>
+        </div>
+        <input class="date-input" id="nextTestDate" type="date" style="width:auto; margin:0" aria-label="다음 측정일">
+      </div>
+      <div class="row danger" id="clearNextTestBtn" style="cursor:pointer">
+        <div class="row-label">측정일 지우기</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 화면 모드 설정 (슬라이드 화면) ============ -->
+<div class="detail" id="themeDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="themeBack">‹ 설정</button>
+    <span class="detail-title">화면 모드</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="group-label">화면</div>
+    <div class="segmented" id="themeSeg" role="group" aria-label="화면 모드 선택">
+      <button data-theme-pref="light" aria-pressed="true">라이트</button>
+      <button data-theme-pref="dark" aria-pressed="false">다크</button>
+      <button data-theme-pref="system" aria-pressed="false">자동</button>
     </div>
   </div>
 </div>
@@ -688,12 +730,14 @@
   function resolveTheme(pref){
     return pref==="system" ? (systemDarkMQ.matches ? "dark" : "light") : pref;
   }
+  var THEME_LABELS={light:"라이트", dark:"다크", system:"자동"};
   function applyTheme(pref){
     themePref = pref;
     document.documentElement.setAttribute("data-theme", resolveTheme(pref));
     Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
       b.setAttribute("aria-pressed", b.getAttribute("data-theme-pref")===pref ? "true" : "false");
     });
+    $("themeRowDesc").textContent = THEME_LABELS[pref];
   }
   applyTheme(themePref);
   Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
@@ -778,20 +822,27 @@
     $("streakCount").textContent=n;
     banner.style.display="flex";
   }
+  function updateScheduleRowDesc(){
+    var v=localStorage.getItem(NEXTTESTKEY);
+    $("scheduleRowDesc").textContent = v ? shortDate(v)+" 예정" : "설정 안 됨";
+  }
   $("nextTestDate").addEventListener("change", function(){
     if(this.value) localStorage.setItem(NEXTTESTKEY, this.value);
     else localStorage.removeItem(NEXTTESTKEY);
     renderHomeSummary();
+    updateScheduleRowDesc();
   });
   $("clearNextTestBtn").addEventListener("click", function(){
     localStorage.removeItem(NEXTTESTKEY);
     $("nextTestDate").value="";
     renderHomeSummary();
+    updateScheduleRowDesc();
   });
   $("homeDdayCard").addEventListener("click", function(){
-    if(!localStorage.getItem(NEXTTESTKEY)) setTab("settings");
+    if(!localStorage.getItem(NEXTTESTKEY)) $("scheduleDetail").classList.add("open");
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
+  updateScheduleRowDesc();
 
   function renderTrendCards(){
     var box=$("exCards");
@@ -1217,6 +1268,14 @@
   // ---- settings: 기준 sub-page ----
   $("stdRow").addEventListener("click", function(){ $("stdDetail").classList.add("open"); });
   $("stdBack").addEventListener("click", function(){ $("stdDetail").classList.remove("open"); });
+
+  // ---- settings: 일정 sub-page ----
+  $("scheduleRow").addEventListener("click", function(){ $("scheduleDetail").classList.add("open"); });
+  $("scheduleBack").addEventListener("click", function(){ $("scheduleDetail").classList.remove("open"); });
+
+  // ---- settings: 화면 모드 sub-page ----
+  $("themeRow").addEventListener("click", function(){ $("themeDetail").classList.add("open"); });
+  $("themeBack").addEventListener("click", function(){ $("themeDetail").classList.remove("open"); });
 
   // ---- settings: gender ----
   Array.prototype.forEach.call($("genderSeg").querySelectorAll("button"), function(b){
