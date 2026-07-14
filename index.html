@@ -79,9 +79,10 @@
 
   /* ---- grade pill badge (brand-colored, reused everywhere a grade shows) ---- */
   .grade-pill{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:700; line-height:1.6}
-  .grade-pill.g1{background:var(--gold-bg); color:var(--gold)}
-  .grade-pill.g2{background:var(--tint-bg); color:var(--tint)}
-  .grade-pill.g3{background:var(--line); color:var(--ink-dim)}
+  .grade-pill.g4{background:var(--gold-bg); color:var(--gold)}
+  .grade-pill.g3{background:var(--tint-bg); color:var(--tint)}
+  .grade-pill.g2{background:var(--tint-bg); color:var(--tint); opacity:.8}
+  .grade-pill.g1{background:var(--line); color:var(--ink-dim)}
   .grade-pill.g0{background:rgba(255,59,48,.12); color:var(--danger)}
 
   /* ---- ios grouped list ---- */
@@ -103,6 +104,10 @@
     font-family:inherit; font-size:13px; font-weight:600; border-radius:8px; transition:.15s;
   }
   .segmented button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  .age-select{
+    background:var(--bg); border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-size:14px; font-weight:600; border-radius:9px; padding:8px 10px;
+  }
 
   .foot{margin-top:22px; padding:0 4px; font-size:12px; color:var(--ink-faint); line-height:1.8}
 
@@ -389,8 +394,8 @@
     <div class="group">
       <div class="row" id="stdRow" style="cursor:pointer">
         <div>
-          <div class="row-label">군종 · 연령 기준</div>
-          <div class="row-desc" id="stdRowDesc">육군 · 만 25세 이하</div>
+          <div class="row-label">성별 · 연령 기준</div>
+          <div class="row-desc" id="stdRowDesc">남군 · 25세 이하</div>
         </div>
         <span class="ex-chev">›</span>
       </div>
@@ -439,9 +444,9 @@
     </div>
 
     <p class="foot">
-      기준 · 국군 체력검정 등급 (군종별 1~3급)<br>
-      육군 3km · 해군 1.5km · 공군 2km 달리기<br>
-      기록은 이 기기에만 저장됩니다 · v0.4
+      기준 · 국군 체력검정 기준표 (제389조 관련)<br>
+      특급·1급·2급·3급·불합격, 성별·연령별 기준 적용<br>
+      기록은 이 기기에만 저장됩니다 · v0.5
     </p>
   </section>
 
@@ -499,17 +504,18 @@
     <div class="detail-spacer"></div>
   </div>
   <div class="detail-body">
-    <div class="group-label">군종</div>
-    <div class="segmented" id="branchSeg" role="group" aria-label="군종 선택">
-      <button data-branch="army" aria-pressed="true">육군</button>
-      <button data-branch="navy" aria-pressed="false">해군</button>
-      <button data-branch="airforce" aria-pressed="false">공군</button>
+    <div class="group-label">성별</div>
+    <div class="segmented" id="genderSeg" role="group" aria-label="성별 선택">
+      <button data-gender="male" aria-pressed="true">남군</button>
+      <button data-gender="female" aria-pressed="false">여군</button>
     </div>
 
     <div class="group-label">나이</div>
-    <div class="segmented" id="ageSeg" role="group" aria-label="연령 선택">
-      <button data-age="u25" aria-pressed="true">만 25세 이하</button>
-      <button data-age="26to30" aria-pressed="false">만 26세 이상</button>
+    <div class="group">
+      <div class="row">
+        <div class="row-label">연령</div>
+        <select id="ageSelect" class="age-select"></select>
+      </div>
     </div>
   </div>
 </div>
@@ -549,26 +555,68 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", BRANCHKEY="teukup_branch_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1";
 
-  // 국군 체력검정 등급 기준 (군종별)
-  // grades = [1급 컷, 2급 컷, 3급 컷]. 반복종목은 이상, 달리기(초)는 이하.
+  // 국군 체력검정 기준표 (제389조 관련) — 성별 × 연령 13구간 × 종목별 [특급,1급,2급,3급] 컷.
+  // 반복 종목(팔굽/윗몸)은 각 컷이 "이상", 3km 달리기는 각 컷이 초 단위 "이하".
+  var AGE_BANDS=[
+    {key:"u25",label:"25세 이하"}, {key:"a26",label:"26~30세"}, {key:"a31",label:"31~35세"},
+    {key:"a36",label:"36~40세"}, {key:"a41",label:"41~43세"}, {key:"a44",label:"44~46세"},
+    {key:"a47",label:"47~49세"}, {key:"a50",label:"50~51세"}, {key:"a52",label:"52~53세"},
+    {key:"a54",label:"54~55세"}, {key:"a56",label:"56~57세"}, {key:"a58",label:"58~59세"},
+    {key:"a60",label:"60세 이상"}
+  ];
+  function buildCuts(c0,c1,c2,c3){
+    var o={};
+    AGE_BANDS.forEach(function(b,i){ o[b.key]=[c0[i],c1[i],c2[i],c3[i]]; });
+    return o;
+  }
   var STD={
-    army:{ label:"육군", runDist:"3km",
-      push:[72,66,60], sit:[82,76,70], run:[750,810,870] },        // 12:30 / 13:30 / 14:30
-    navy:{ label:"해군", runDist:"1.5km",
-      push:[70,60,50], sit:[80,70,60], run:[435,465,510] },        // 7:15 / 7:45 / 8:30
-    airforce:{ label:"공군", runDist:"2km",
-      push:[68,60,52], sit:[78,70,62], run:[510,540,570] }         // 8:30 / 9:00 / 9:30
+    male:{
+      label:"남군",
+      push: buildCuts(
+        [72,70,68,65,61,57,54,51,49,47,44,42,40],
+        [64,62,60,57,53,49,46,43,41,39,36,34,32],
+        [56,54,52,49,45,41,38,35,33,31,28,26,24],
+        [48,46,44,41,37,33,30,27,25,23,20,18,16]),
+      sit: buildCuts(
+        [86,84,80,76,72,68,65,62,60,58,56,54,52],
+        [78,76,72,68,64,60,57,54,52,50,48,46,44],
+        [70,68,65,60,56,52,49,46,44,42,40,38,36],
+        [62,60,57,52,48,44,41,38,36,34,32,30,28]),
+      run: buildCuts(
+        [750,765,780,795,810,825,840,855,870,885,910,935,960],
+        [812,832,852,872,889,905,925,942,962,979,1006,1033,1060],
+        [874,899,924,949,967,986,1011,1029,1054,1072,1103,1131,1159],
+        [936,966,996,1026,1046,1066,1096,1116,1146,1166,1199,1229,1259])
+    },
+    female:{
+      label:"여군",
+      push: buildCuts(
+        [35,33,31,29,26,24,22,19,17,15,13,12,11],
+        [31,29,27,25,23,21,19,17,14,13,11,10,9],
+        [27,26,23,22,19,18,16,14,12,10,9,8,7],
+        [23,22,20,18,16,15,13,11,9,8,7,6,5]),
+      sit: buildCuts(
+        [71,68,66,63,60,57,55,54,53,52,50,48,46],
+        [63,60,58,55,52,49,47,46,45,44,42,41,39],
+        [55,52,50,47,44,41,39,38,37,36,34,33,31],
+        [47,45,42,39,36,33,31,30,29,28,26,25,24]),
+      run: buildCuts(
+        [900,918,936,954,972,990,1008,1026,1044,1062,1090,1115,1140],
+        [974,998,1022,1046,1066,1086,1110,1130,1154,1174,1203,1230,1257],
+        [1049,1079,1109,1139,1161,1183,1213,1235,1265,1287,1316,1345,1373],
+        [1123,1159,1195,1231,1255,1279,1315,1338,1375,1399,1429,1459,1489])
+    }
   };
 
   var EXES={
     push:{name:"팔굽혀펴기", emoji:"💪", unit:"개", isTime:false},
     sit:{name:"윗몸일으키기", emoji:"🔥", unit:"개", isTime:false},
-    run:{name:"달리기", emoji:"🏃", unit:"", isTime:true}
+    run:{name:"3km 달리기", emoji:"🏃", unit:"", isTime:true}
   };
 
-  var branch = localStorage.getItem(BRANCHKEY) || "army";
+  var gender = localStorage.getItem(GENDERKEY) || "male";
   var age = localStorage.getItem(AGEKEY) || "u25";
   var records = load();
   var currentDetailKey = null;
@@ -579,20 +627,20 @@
   function fmtRun(s){ if(s==null||isNaN(s))return "—"; var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
   function today(){ return new Date().toISOString().slice(0,10) }
 
-  // ---- standards / grading ----
-  function exName(key){ return key==="run" ? STD[branch].runDist+" 달리기" : EXES[key].name; }
-  function cuts(key){ return STD[branch][key]; }
-  function topCut(key){ return cuts(key)[0]; }   // 1급 기준
-  function gradeOf(key, val){                     // 1/2/3급 or 0(미달)
+  // ---- standards / grading (0=불합격, 1=3급, 2=2급, 3=1급, 4=특급) ----
+  var GRADE_LABELS=["불합격","3급","2급","1급","특급"];
+  function exName(key){ return EXES[key].name; }
+  function cuts(key){ return STD[gender][key][age]; }
+  function topCut(key){ return cuts(key)[0]; }   // 특급 기준
+  function gradeOf(key, val){
     var g=cuts(key);
     if(EXES[key].isTime){
-      if(val<=g[0]) return 1; if(val<=g[1]) return 2; if(val<=g[2]) return 3; return 0;
+      if(val<=g[0]) return 4; if(val<=g[1]) return 3; if(val<=g[2]) return 2; if(val<=g[3]) return 1; return 0;
     }
-    if(val>=g[0]) return 1; if(val>=g[1]) return 2; if(val>=g[2]) return 3; return 0;
+    if(val>=g[0]) return 4; if(val>=g[1]) return 3; if(val>=g[2]) return 2; if(val>=g[3]) return 1; return 0;
   }
-  function gradeLabel(gr){ return gr===0 ? "미달" : gr+"급"; }
+  function gradeLabel(gr){ return GRADE_LABELS[gr]; }
   function gradePill(gr){ return '<span class="grade-pill g'+gr+'">'+gradeLabel(gr)+'</span>'; }
-  function passes(key, val){ return gradeOf(key, val)===1; }  // 1급 = 최고 등급
 
   // ---- theme (light / dark / system-auto) ----
   var systemDarkMQ = window.matchMedia("(prefers-color-scheme: dark)");
@@ -634,7 +682,6 @@
   }
 
   // ---- home summary: overall grade + next-test D-day ----
-  var GRADE_RANK={0:0, 3:1, 2:2, 1:3}; // higher rank = better; 0(미달) is worst
   function renderHomeSummary(){
     var gradeEl=$("homeGrade"), ddayEl=$("homeDday"), ddayCard=$("homeDdayCard");
 
@@ -649,9 +696,9 @@
       gradeEl.textContent=have.length+"/"+keys.length+" 종목";
       gradeEl.className="stat-value";
     }else{
-      var worst=grades.reduce(function(a,b){ return GRADE_RANK[b]<GRADE_RANK[a] ? b : a; });
-      gradeEl.textContent = worst===1 ? "특급전사!" : gradeLabel(worst);
-      gradeEl.className="stat-value"+(worst===1?" gold":(worst===0?" muted":""));
+      var worst=Math.min.apply(null, grades); // scale is 0(불합격)..4(특급), lower = worse
+      gradeEl.textContent = worst===4 ? "특급전사!" : gradeLabel(worst);
+      gradeEl.className="stat-value"+(worst===4?" gold":(worst===0?" muted":""));
     }
 
     var nextDate=localStorage.getItem(NEXTTESTKEY);
@@ -705,7 +752,7 @@
     var box=$("exCards");
     box.innerHTML = Object.keys(EXES).map(function(key){
       var ex=EXES[key], rec=latestValue(key), atGoal=false;
-      if(rec) atGoal=(gradeOf(key,rec[key])===1);
+      if(rec) atGoal=(gradeOf(key,rec[key])===4);
       return '<button class="ex-card'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
@@ -752,7 +799,7 @@
       var dateStr=ymd(y,m,d);
       var rec=recordsOnDate(dateStr)[0];
       var dots = rec ? '<div class="cal-dots">'+Object.keys(EXES).filter(function(k){ return typeof rec[k]==="number"; }).map(function(k){
-        return '<span'+(gradeOf(k, rec[k])===1?' class="gold"':'')+'></span>';
+        return '<span'+(gradeOf(k, rec[k])===4?' class="gold"':'')+'></span>';
       }).join("")+'</div>' : '';
       var cls="cal-day"+(dateStr===todayStr?" today":"")+(dateStr===calState.selected?" selected":"");
       cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">'+d+dots+'</button>';
@@ -829,7 +876,7 @@
   // ---- detail screen ----
   function targetText(key){
     var v=topCut(key);
-    return EXES[key].isTime ? "1급 기준 "+fmtRun(v)+" 이내" : "1급 기준 "+v+"개";
+    return EXES[key].isTime ? "특급 기준 "+fmtRun(v)+" 이내" : "특급 기준 "+v+"개";
   }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
@@ -881,7 +928,7 @@
     drawGraph(key);
   }
 
-  // ---- save feedback: toast + confetti burst on 1급 ----
+  // ---- save feedback: toast + confetti burst on 특급 ----
   function showToast(text, gold){
     var t=$("toast");
     clearTimeout(t._hideTimer);
@@ -913,15 +960,15 @@
     var dateStr=$("detailDate").value || today();
     var rec = records.filter(function(r){ return r.date===dateStr; })[0];
     if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
-    rec[key]=val; rec.age=age;
+    rec[key]=val; rec.age=age; rec.gender=gender;
     persist();
     localStorage.setItem(LASTDATEKEY, dateStr);
     buildInput(key); // clear the value field, keep the date for the next entry
     refreshDetail(key);
 
     var gr=gradeOf(key,val);
-    if(gr===1){
-      showToast("🎉 "+exName(key)+" 1급 달성!", true);
+    if(gr===4){
+      showToast("🎉 "+exName(key)+" 특급 달성!", true);
       burstConfetti();
       var g=$("statGrade");
       g.classList.remove("pulse"); void g.offsetWidth; g.classList.add("pulse");
@@ -943,7 +990,7 @@
     latestEl.textContent = ex.isTime ? fmtRun(val) : val+ex.unit;
     latestEl.className="stat-value";
     gradeEl.textContent=gradeLabel(gr);
-    gradeEl.className="stat-value"+(gr===1?" gold":(gr===0?" muted":""));
+    gradeEl.className="stat-value"+(gr===4?" gold":(gr===0?" muted":""));
   }
 
   // ---- delete a single exercise's value on a given date (used from the calendar) ----
@@ -1012,13 +1059,14 @@
     }
     function fmtTick(v){ return ex.isTime ? fmtRun(v) : (Math.round(v*10)/10); }
 
-    // ---- grade bands (1급/2급/3급/미달) as background color zones ----
-    var yTop=padT, yC1=yAt(c[0]), yC2=yAt(c[1]), yC3=yAt(c[2]), yBottom=H-padB;
+    // ---- grade bands (특급/1급/2급/3급/불합격) as background color zones ----
+    var yTop=padT, yC0=yAt(c[0]), yC1=yAt(c[1]), yC2=yAt(c[2]), yC3=yAt(c[3]), yBottom=H-padB;
     var bandDefs=[
-      {y0:yTop, y1:yC1, fill:"var(--gold)",    opacity:.16, label:"1급"},
-      {y0:yC1,  y1:yC2, fill:"var(--tint)",    opacity:.13, label:"2급"},
+      {y0:yTop, y1:yC0, fill:"var(--gold)",    opacity:.18, label:"특급"},
+      {y0:yC0,  y1:yC1, fill:"var(--tint)",    opacity:.15, label:"1급"},
+      {y0:yC1,  y1:yC2, fill:"var(--tint)",    opacity:.08, label:"2급"},
       {y0:yC2,  y1:yC3, fill:"var(--ink-faint)",opacity:.13, label:"3급"},
-      {y0:yC3,  y1:yBottom, fill:"var(--danger)", opacity:.10, label:"미달"}
+      {y0:yC3,  y1:yBottom, fill:"var(--danger)", opacity:.10, label:"불합격"}
     ];
     var bands="", bandLabels="";
     bandDefs.forEach(function(b){
@@ -1057,9 +1105,9 @@
   }
 
   // ---- settings: refresh everything after standard change ----
-  function ageLabel(a){ return a==="u25" ? "만 25세 이하" : "만 26세 이상"; }
+  function ageLabel(a){ var b=AGE_BANDS.filter(function(x){return x.key===a;})[0]; return b?b.label:a; }
   function updateStdRowDesc(){
-    $("stdRowDesc").textContent = STD[branch].label+" · "+ageLabel(age);
+    $("stdRowDesc").textContent = STD[gender].label+" · "+ageLabel(age);
   }
   function onStandardChange(){
     updateStdRowDesc();
@@ -1076,32 +1124,28 @@
   $("stdRow").addEventListener("click", function(){ $("stdDetail").classList.add("open"); });
   $("stdBack").addEventListener("click", function(){ $("stdDetail").classList.remove("open"); });
 
-  // ---- settings: branch ----
-  Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(b){
+  // ---- settings: gender ----
+  Array.prototype.forEach.call($("genderSeg").querySelectorAll("button"), function(b){
     b.addEventListener("click", function(){
-      branch=b.getAttribute("data-branch"); localStorage.setItem(BRANCHKEY, branch);
-      Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(x){
+      gender=b.getAttribute("data-gender"); localStorage.setItem(GENDERKEY, gender);
+      Array.prototype.forEach.call($("genderSeg").querySelectorAll("button"), function(x){
         x.setAttribute("aria-pressed", x===b?"true":"false");
       });
       onStandardChange();
     });
   });
-  Array.prototype.forEach.call($("branchSeg").querySelectorAll("button"), function(x){
-    x.setAttribute("aria-pressed", x.getAttribute("data-branch")===branch?"true":"false");
+  Array.prototype.forEach.call($("genderSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", x.getAttribute("data-gender")===gender?"true":"false");
   });
 
-  // ---- settings: age ----
-  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(b){
-    b.addEventListener("click", function(){
-      age=b.getAttribute("data-age"); localStorage.setItem(AGEKEY, age);
-      Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
-        x.setAttribute("aria-pressed", x===b?"true":"false");
-      });
-      onStandardChange();
-    });
-  });
-  Array.prototype.forEach.call($("ageSeg").querySelectorAll("button"), function(x){
-    x.setAttribute("aria-pressed", x.getAttribute("data-age")===age?"true":"false");
+  // ---- settings: age (dropdown, 13 official bands) ----
+  $("ageSelect").innerHTML = AGE_BANDS.map(function(b){
+    return '<option value="'+b.key+'">'+b.label+'</option>';
+  }).join("");
+  $("ageSelect").value = age;
+  $("ageSelect").addEventListener("change", function(){
+    age=this.value; localStorage.setItem(AGEKEY, age);
+    onStandardChange();
   });
   updateStdRowDesc();
 
