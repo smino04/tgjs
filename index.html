@@ -1265,7 +1265,19 @@
         +'<text x="'+(padL-6)+'" y="'+y+'" text-anchor="end" dominant-baseline="middle" font-size="8.5" fill="var(--ink-faint)">'+fmtTick(t)+'</text>';
     }).join("");
 
-    var linePath = pts.map(function(p,i){ return (i===0?"M":"L")+xAt(i).toFixed(1)+" "+yAt(values[i]).toFixed(1); }).join(" ");
+    // ---- smooth curve through the points (Catmull-Rom → cubic Bezier) ----
+    function smoothPath(nodes){
+      if(nodes.length<2) return "M"+nodes[0].x.toFixed(1)+" "+nodes[0].y.toFixed(1);
+      var d="M"+nodes[0].x.toFixed(1)+" "+nodes[0].y.toFixed(1);
+      for(var i=0;i<nodes.length-1;i++){
+        var p0=nodes[i-1]||nodes[i], p1=nodes[i], p2=nodes[i+1], p3=nodes[i+2]||p2;
+        var c1x=p1.x+(p2.x-p0.x)/6, c1y=p1.y+(p2.y-p0.y)/6;
+        var c2x=p2.x-(p3.x-p1.x)/6, c2y=p2.y-(p3.y-p1.y)/6;
+        d += " C"+c1x.toFixed(1)+" "+c1y.toFixed(1)+" "+c2x.toFixed(1)+" "+c2y.toFixed(1)+" "+p2.x.toFixed(1)+" "+p2.y.toFixed(1);
+      }
+      return d;
+    }
+    var linePath = smoothPath(pts.map(function(p,i){ return {x:xAt(i), y:yAt(values[i])}; }));
 
     var step = pts.length>6 ? Math.ceil(pts.length/6) : 1;
     var dots="", valueLabels="", dateLabels="";
