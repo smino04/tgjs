@@ -909,12 +909,13 @@
       var done = val!=null;
       if(done) doneCount++;
       var gr = done ? gradeOf(key,val) : null;
+      var gap = done ? gapText(key, val) : null;
       return '<button class="ex-card today-card'+(done?' done':'')+(gr===4?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div>'
           +(done
-            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+'</div>'
+            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 특급까지 '+gap:'')+'</div>'
             : '<div class="row-desc" style="color:var(--tint); font-weight:600">탭해서 오늘 기록 입력</div>')
           +'</div>'
           +(done ? gradePill(gr) : '<div class="ex-chev">›</div>')
@@ -1051,9 +1052,23 @@
   });
 
   // ---- detail screen ----
+  // gap between a value and the 특급 cutoff: null once already at/past goal
+  function gapText(key, val){
+    var ex=EXES[key], top=topCut(key);
+    if(ex.isTime){
+      if(val<=top) return null;
+      return fmtRun(val-top)+" 단축 필요";
+    }
+    if(val>=top) return null;
+    return (top-val)+ex.unit+" 남음";
+  }
   function targetText(key){
-    var v=topCut(key);
-    return EXES[key].isTime ? "특급 기준 "+fmtRun(v)+" 이내" : "특급 기준 "+v+"개";
+    var v=topCut(key), ex=EXES[key];
+    var base = ex.isTime ? "특급 기준 "+fmtRun(v)+" 이내" : "특급 기준 "+v+"개";
+    var rec=latestValue(key);
+    if(!rec || typeof rec[key]!=="number") return base;
+    var gap=gapText(key, rec[key]);
+    return gap ? base+" · 특급까지 "+gap : base+" · 이미 특급이에요 🎉";
   }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
@@ -1101,6 +1116,7 @@
 
   function refreshDetail(key){
     renderAll();
+    $("detailTarget").textContent=targetText(key);
     renderStats(key);
     drawGraph(key);
   }
