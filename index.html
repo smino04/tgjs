@@ -1164,6 +1164,9 @@
     refreshDetail(key);
 
     var gr=gradeOf(key,val);
+    if(window.gtag){
+      gtag("event", "record_saved", { exercise: key, grade: gradeLabel(gr), mode: launchMode });
+    }
     if(gr===4){
       showToast("🎉 "+exName(key)+" 특급 달성!", true);
       burstConfetti();
