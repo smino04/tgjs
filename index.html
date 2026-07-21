@@ -147,6 +147,28 @@
 
   .foot{margin-top:22px; padding:0 4px; font-size:12px; color:var(--ink-faint); line-height:1.8}
 
+  /* ---- first-run onboarding: 성별 → 연령 → 첫 기록 ---- */
+  #onboarding .detail-body{padding-top:calc(env(safe-area-inset-top, 20px) + 28px)}
+  .ob-dots{display:flex; gap:6px; justify-content:center; margin:6px 0 28px}
+  .ob-dots span{width:7px; height:7px; border-radius:50%; background:var(--line); transition:.2s}
+  .ob-dots span.on{background:var(--tint); width:20px; border-radius:4px}
+  .ob-title{font-size:22px; font-weight:800; text-align:center; margin-bottom:8px; letter-spacing:-.01em}
+  .ob-sub{font-size:14px; color:var(--ink-faint); text-align:center; line-height:1.6; margin-bottom:26px}
+  .ob-label{font-size:13px; font-weight:600; color:var(--ink-faint); margin:0 2px 8px}
+  .ob-btn{margin-top:28px}
+  .ob-ex-picker{display:flex; gap:10px; margin-bottom:4px}
+  .ob-ex-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:7px;
+    background:var(--surface); border:1px solid var(--line); border-radius:15px;
+    padding:16px 6px; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; color:var(--ink);
+    transition:background-color .2s, border-color .2s;
+  }
+  .ob-ex-btn .emoji{font-size:28px; line-height:1}
+  .ob-ex-btn.selected{border-color:var(--tint); background:var(--tint-bg)}
+  .ob-result{text-align:center; margin:22px 0 4px; animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards}
+  .ob-result .ob-result-val{font-size:14px; color:var(--ink-faint); margin-bottom:8px}
+  .ob-result .ob-result-sub{font-size:14px; color:var(--ink-dim); margin-top:8px}
+
   /* ---- screens (tab content): quick fade-in, matching the reference app's tab switch ---- */
   .screen{display:none; padding:0 18px}
   .screen.active{display:block; animation:screenFade .2s ease-out}
@@ -642,6 +664,50 @@
     <div class="modal-title">📲 홈 화면에 추가하기</div>
     <div class="modal-body" id="a2hsBody"></div>
     <button class="btn" id="a2hsClose">확인했어요</button>
+  </div>
+</div>
+
+<!-- ============ 첫 방문자 온보딩 (성별 → 연령 → 첫 기록) ============ -->
+<div class="detail" id="onboarding" style="z-index:1000">
+  <div class="detail-body">
+    <div class="ob-dots" id="obDots"><span class="on"></span><span></span><span></span></div>
+
+    <div class="ob-step" id="obStep1">
+      <div class="ob-title">⭐ 특급전사에 오신 걸 환영해요</div>
+      <div class="ob-sub">국군 체력검정 기준표 그대로, 당신만의 기준으로 맞춰드릴게요</div>
+      <div class="ob-label">성별</div>
+      <div class="segmented" id="obGenderSeg" role="group" aria-label="성별 선택">
+        <button data-gender="male" aria-pressed="true">남군</button>
+        <button data-gender="female" aria-pressed="false">여군</button>
+      </div>
+      <button class="btn ob-btn" id="obNext1">다음</button>
+    </div>
+
+    <div class="ob-step" id="obStep2" style="display:none">
+      <div class="ob-title">연령대를 선택하세요</div>
+      <div class="ob-sub">특급·1급·2급·3급 기준이 자동으로 맞춰져요</div>
+      <div class="group">
+        <div class="row">
+          <div class="row-label">연령</div>
+          <select id="obAgeSelect" class="age-select"></select>
+        </div>
+      </div>
+      <button class="btn ob-btn" id="obNext2">다음</button>
+    </div>
+
+    <div class="ob-step" id="obStep3" style="display:none">
+      <div class="ob-title">첫 기록을 남겨볼까요?</div>
+      <div class="ob-sub">종목 하나만 골라서 지금 바로 입력해보세요</div>
+      <div class="ob-ex-picker" id="obExPicker"></div>
+      <div class="input-card" id="obInputArea" style="display:none">
+        <div class="input-row">
+          <div class="field-input" id="obInputWrap"></div>
+          <button type="button" class="btn" id="obSaveBtn" style="flex:0 0 auto; width:auto; padding:11px 20px">확인</button>
+        </div>
+      </div>
+      <div class="ob-result" id="obResult" style="display:none"></div>
+      <button class="btn ob-btn" id="obFinish" style="display:none">시작하기</button>
+    </div>
   </div>
 </div>
 
@@ -1443,6 +1509,132 @@
     if(window.gtag) gtag("event", "app_installed", { platform: platform });
   });
 
+  // ---- first-run onboarding: 성별 → 연령 → 첫 기록, then prompt A2HS ----
+  // Right defaults matter here: without this, brand-new visitors silently see
+  // 남군·25세 이하 standards regardless of who they actually are, so the
+  // numbers on screen may just not apply to them at all.
+  var obExKey = null;
+  function setObDot(n){
+    Array.prototype.forEach.call($("obDots").querySelectorAll("span"), function(s,i){
+      s.classList.toggle("on", i===(n-1));
+    });
+  }
+  function obBuildInput(key){
+    var ex=EXES[key], wrap=$("obInputWrap");
+    if(ex.isTime){
+      wrap.innerHTML =
+        '<input id="obDIn1" type="number" inputmode="numeric" min="0" placeholder="00" aria-label="분">'
+        +'<span class="colon">:</span>'
+        +'<input id="obDIn2" type="number" inputmode="numeric" min="0" max="59" placeholder="00" aria-label="초">';
+    }else{
+      wrap.innerHTML = '<input id="obDIn1" type="number" inputmode="numeric" min="0" placeholder="0" aria-label="'+ex.name+' 값"><span class="unit">'+ex.unit+'</span>';
+    }
+  }
+  function obReadInputValue(key){
+    var ex=EXES[key];
+    if(ex.isTime){
+      var mm=parseInt($("obDIn1").value,10), ss=parseInt($("obDIn2").value,10);
+      if(isNaN(mm)&&isNaN(ss)) return NaN;
+      return (isNaN(mm)?0:mm)*60+(isNaN(ss)?0:ss);
+    }
+    return parseInt($("obDIn1").value,10);
+  }
+  function renderObExPicker(){
+    var box=$("obExPicker");
+    box.innerHTML = Object.keys(EXES).map(function(key){
+      var ex=EXES[key];
+      return '<button type="button" class="ob-ex-btn" data-ex="'+key+'"><span class="emoji">'+ex.emoji+'</span><span>'+ex.name+'</span></button>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".ob-ex-btn"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call(box.querySelectorAll(".ob-ex-btn"), function(x){ x.classList.remove("selected"); });
+        b.classList.add("selected");
+        obExKey = b.getAttribute("data-ex");
+        obBuildInput(obExKey);
+        $("obInputArea").style.display="block";
+      });
+    });
+  }
+
+  Array.prototype.forEach.call($("obGenderSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      Array.prototype.forEach.call($("obGenderSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      gender = b.getAttribute("data-gender");
+    });
+  });
+  $("obNext1").addEventListener("click", function(){
+    localStorage.setItem(GENDERKEY, gender);
+    $("obStep1").style.display="none";
+    $("obStep2").style.display="block";
+    setObDot(2);
+  });
+
+  $("obAgeSelect").innerHTML = AGE_BANDS.map(function(b){
+    return '<option value="'+b.key+'">'+b.label+'</option>';
+  }).join("");
+  $("obAgeSelect").value = age;
+  $("obAgeSelect").addEventListener("change", function(){ age=this.value; });
+  $("obNext2").addEventListener("click", function(){
+    localStorage.setItem(AGEKEY, age);
+    updateStdRowDesc();
+    $("obStep2").style.display="none";
+    $("obStep3").style.display="block";
+    setObDot(3);
+    renderObExPicker();
+  });
+
+  $("obInputWrap").addEventListener("input", function(){
+    if(inputStartedFired) return;
+    inputStartedFired = true;
+    if(window.gtag) gtag("event", "input_started");
+  });
+
+  $("obSaveBtn").addEventListener("click", function(){
+    var key=obExKey;
+    if(!key) return;
+    var val=obReadInputValue(key);
+    if(isNaN(val) || val<=0){
+      alert(EXES[key].isTime ? "달리기 기록을 확인해주세요." : "기록을 확인해주세요.");
+      return;
+    }
+    var dateStr=today();
+    var rec = records.filter(function(r){ return r.date===dateStr; })[0];
+    if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
+    rec[key]=val; rec.age=age; rec.gender=gender;
+    persist();
+    localStorage.setItem(LASTDATEKEY, dateStr);
+
+    var gr=gradeOf(key,val);
+    if(window.gtag){
+      gtag("event", "record_saved", {
+        exercise: key, grade: gradeLabel(gr), mode: launchMode,
+        age_group: age, record_count: records.length, is_teukup: gr===4 ? 1 : 0
+      });
+    }
+
+    $("obInputArea").style.display="none";
+    $("obExPicker").style.display="none";
+    var box=$("obResult");
+    box.style.display="block";
+    box.innerHTML = '<div class="ob-result-val">'+exName(key)+' '+(EXES[key].isTime?fmtRun(val):val+EXES[key].unit)+'</div>'
+      +gradePill(gr)
+      +'<div class="ob-result-sub">'+(gr===4 ? "바로 특급이시네요! 🎉" : targetText(key))+'</div>';
+    if(gr===4) burstConfetti();
+    $("obFinish").style.display="block";
+  });
+
+  $("obFinish").addEventListener("click", function(){
+    $("onboarding").classList.remove("open");
+    renderAll();
+    setTimeout(openA2HS, 400); // let the close transition finish before the A2HS sheet appears
+  });
+
+  function showOnboardingIfNeeded(){
+    if(records.length===0) $("onboarding").classList.add("open");
+  }
+
   // ---- tab switching: quick fade-in on the incoming screen ----
   function setTab(name){
     Array.prototype.forEach.call(document.querySelectorAll(".screen"), function(p){
@@ -1466,6 +1658,7 @@
   // ---- init ----
   renderAll();
   setTab("home");
+  showOnboardingIfNeeded();
 
   // ---- returning_user: 저장된 기록을 갖고 다시 열었을 때 (리텐션 핵심 지표) ----
   if(records.length>0 && window.gtag){
