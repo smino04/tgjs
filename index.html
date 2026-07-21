@@ -495,6 +495,14 @@
         </div>
         <span class="ex-chev">›</span>
       </div>
+      <div class="row row-icon" id="goalRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:var(--gold-bg)">🎯</div>
+        <div class="row-text">
+          <div class="row-label">목표 등급</div>
+          <div class="row-desc" id="goalRowDesc">특급</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </div>
       <div class="row row-icon" id="scheduleRow" style="cursor:pointer">
         <div class="row-icon-badge" style="background:rgba(23,109,222,.12)">📅</div>
         <div class="row-text">
@@ -610,6 +618,20 @@
   </div>
 </div>
 
+<!-- ============ 목표 등급 설정 (슬라이드 화면) ============ -->
+<div class="detail" id="goalDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="goalBack">‹ 설정</button>
+    <span class="detail-title">목표 등급</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="group-label">어떤 등급을 목표로 할까요?</div>
+    <div class="group" id="goalOptions"></div>
+    <p class="foot">"목표까지 N개 남음"처럼 홈·상세 화면에 뜨는 잔여량이 여기서 고른 등급 기준으로 계산돼요. 특급은 항상 별도로 축하 연출이 뜨는 최상위 등급이에요.</p>
+  </div>
+</div>
+
 <!-- ============ 일정 설정 (슬라이드 화면) ============ -->
 <div class="detail" id="scheduleDetail">
   <div class="detail-nav">
@@ -671,7 +693,7 @@
 <!-- ============ 첫 방문자 온보딩 (성별 → 연령 → 첫 기록) ============ -->
 <div class="detail" id="onboarding" style="z-index:1000">
   <div class="detail-body">
-    <div class="ob-dots" id="obDots"><span class="on"></span><span></span><span></span></div>
+    <div class="ob-dots" id="obDots"><span class="on"></span><span></span><span></span><span></span></div>
 
     <div class="ob-step" id="obStep1">
       <div class="ob-title">⭐ 특급전사에 오신 걸 환영해요</div>
@@ -697,6 +719,13 @@
     </div>
 
     <div class="ob-step" id="obStep3" style="display:none">
+      <div class="ob-title">목표 등급을 정해보세요</div>
+      <div class="ob-sub">지금 당장 특급이 아니어도 괜찮아요, 원하는 등급부터 시작하세요</div>
+      <div class="group" id="obGoalOptions"></div>
+      <button class="btn ob-btn" id="obNext3">다음</button>
+    </div>
+
+    <div class="ob-step" id="obStep4" style="display:none">
       <div class="ob-title">첫 기록을 남겨볼까요?</div>
       <div class="ob-sub">종목 하나만 골라서 지금 바로 입력해보세요</div>
       <div class="ob-ex-picker" id="obExPicker"></div>
@@ -730,7 +759,7 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1", TEUKUPACHIEVEDKEY="teukup_achieved_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1", TEUKUPACHIEVEDKEY="teukup_achieved_v1", GOALKEY="teukup_goal_v1";
 
   // 국군 체력검정 기준표 (제389조 관련) — 성별 × 연령 13구간 × 종목별 [특급,1급,2급,3급] 컷.
   // 반복 종목(팔굽/윗몸)은 각 컷이 "이상", 3km 달리기는 각 컷이 초 단위 "이하".
@@ -793,6 +822,7 @@
 
   var gender = localStorage.getItem(GENDERKEY) || "male";
   var age = localStorage.getItem(AGEKEY) || "u25";
+  var goalGrade = parseInt(localStorage.getItem(GOALKEY), 10) || 4; // 1=3급 .. 4=특급
   var records = load();
   var currentDetailKey = null;
 
@@ -807,6 +837,7 @@
   function exName(key){ return EXES[key].name; }
   function cuts(key){ return STD[gender][key][age]; }
   function topCut(key){ return cuts(key)[0]; }   // 특급 기준
+  function goalCut(key){ return cuts(key)[4-goalGrade]; }   // 사용자가 고른 목표 등급 기준
   function gradeOf(key, val){
     var g=cuts(key);
     if(EXES[key].isTime){
@@ -986,7 +1017,7 @@
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div>'
           +(done
-            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 특급까지 '+gap:'')+'</div>'
+            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 목표까지 '+gap:'')+'</div>'
             : '<div class="row-desc" style="color:var(--tint); font-weight:600">탭해서 오늘 기록 입력</div>')
           +'</div>'
           +(done ? gradePill(gr) : '<div class="ex-chev">›</div>')
@@ -1111,23 +1142,23 @@
   });
 
   // ---- detail screen ----
-  // gap between a value and the 특급 cutoff: null once already at/past goal
+  // gap between a value and the user's chosen goal cutoff: null once already at/past goal
   function gapText(key, val){
-    var ex=EXES[key], top=topCut(key);
+    var ex=EXES[key], goal=goalCut(key);
     if(ex.isTime){
-      if(val<=top) return null;
-      return fmtRun(val-top)+" 단축 필요";
+      if(val<=goal) return null;
+      return fmtRun(val-goal)+" 단축 필요";
     }
-    if(val>=top) return null;
-    return (top-val)+ex.unit+" 남음";
+    if(val>=goal) return null;
+    return (goal-val)+ex.unit+" 남음";
   }
   function targetText(key){
-    var v=topCut(key), ex=EXES[key];
-    var base = ex.isTime ? "특급 기준 "+fmtRun(v)+" 이내" : "특급 기준 "+v+"개";
+    var v=goalCut(key), ex=EXES[key], label=GRADE_LABELS[goalGrade];
+    var base = ex.isTime ? label+" 기준 "+fmtRun(v)+" 이내" : label+" 기준 "+v+"개";
     var rec=latestValue(key);
     if(!rec || typeof rec[key]!=="number") return base;
     var gap=gapText(key, rec[key]);
-    return gap ? base+" · 특급까지 "+gap : base+" · 이미 특급이에요 🎉";
+    return gap ? base+" · 목표까지 "+gap : base+" · 이미 목표 달성했어요 🎉";
   }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
@@ -1344,7 +1375,7 @@
     }
     empty.style.display="none"; svg.style.display="block";
 
-    var c=cuts(key), target=c[0];
+    var c=cuts(key), target=goalCut(key);
     var values=pts.map(function(p){ return p[key]; });
     var lower=ex.isTime;
     var allVals=values.concat(c);
@@ -1419,8 +1450,12 @@
   function updateStdRowDesc(){
     $("stdRowDesc").textContent = STD[gender].label+" · "+ageLabel(age);
   }
+  function updateGoalRowDesc(){
+    $("goalRowDesc").textContent = GRADE_LABELS[goalGrade];
+  }
   function onStandardChange(){
     updateStdRowDesc();
+    updateGoalRowDesc();
     renderAll();
     if(currentDetailKey){
       $("detailTitle").textContent=EXES[currentDetailKey].emoji+" "+exName(currentDetailKey);
@@ -1441,6 +1476,29 @@
   // ---- settings: 화면 모드 sub-page ----
   $("themeRow").addEventListener("click", function(){ $("themeDetail").classList.add("open"); });
   $("themeBack").addEventListener("click", function(){ $("themeDetail").classList.remove("open"); });
+
+  // ---- settings: 목표 등급 sub-page ----
+  $("goalRow").addEventListener("click", function(){ $("goalDetail").classList.add("open"); });
+  $("goalBack").addEventListener("click", function(){ $("goalDetail").classList.remove("open"); });
+  function renderGoalOptions(){
+    var box=$("goalOptions");
+    box.innerHTML = [4,3,2,1].map(function(g){
+      return '<div class="row goal-option" data-grade="'+g+'" style="cursor:pointer">'
+        +'<div class="row-label">'+GRADE_LABELS[g]+'</div>'
+        +(g===goalGrade ? '<span class="ex-chev" style="color:var(--tint)">✓</span>' : '')
+      +'</div>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".goal-option"), function(b){
+      b.addEventListener("click", function(){
+        goalGrade = parseInt(b.getAttribute("data-grade"), 10);
+        localStorage.setItem(GOALKEY, goalGrade);
+        renderGoalOptions();
+        onStandardChange();
+      });
+    });
+  }
+  renderGoalOptions();
+  updateGoalRowDesc();
 
   // ---- settings: gender ----
   Array.prototype.forEach.call($("genderSeg").querySelectorAll("button"), function(b){
@@ -1591,6 +1649,30 @@
     $("obStep2").style.display="none";
     $("obStep3").style.display="block";
     setObDot(3);
+    renderObGoalOptions();
+  });
+
+  function renderObGoalOptions(){
+    var box=$("obGoalOptions");
+    box.innerHTML = [4,3,2,1].map(function(g){
+      return '<div class="row goal-option" data-grade="'+g+'" style="cursor:pointer">'
+        +'<div class="row-label">'+GRADE_LABELS[g]+'</div>'
+        +(g===goalGrade ? '<span class="ex-chev" style="color:var(--tint)">✓</span>' : '')
+      +'</div>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".goal-option"), function(b){
+      b.addEventListener("click", function(){
+        goalGrade = parseInt(b.getAttribute("data-grade"), 10);
+        renderObGoalOptions();
+      });
+    });
+  }
+  $("obNext3").addEventListener("click", function(){
+    localStorage.setItem(GOALKEY, goalGrade);
+    updateGoalRowDesc();
+    $("obStep3").style.display="none";
+    $("obStep4").style.display="block";
+    setObDot(4);
     renderObExPicker();
   });
 
