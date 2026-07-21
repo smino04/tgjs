@@ -531,6 +531,14 @@
         </div>
         <span class="ex-chev">›</span>
       </div>
+      <a class="row row-icon" id="feedbackRow" href="https://docs.google.com/forms/d/e/1FAIpQLSdC7no7CUGFGRyPI2F8Z_ZGPXM1uS6aX6KvQ7J-ys1z7LCigw/viewform?usp=publish-editor" target="_blank" rel="noopener" style="text-decoration:none; color:inherit">
+        <div class="row-icon-badge" style="background:rgba(255,149,0,.12)">💬</div>
+        <div class="row-text">
+          <div class="row-label">피드백 보내기</div>
+          <div class="row-desc">불편한 점, 건의사항을 알려주세요</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </a>
       <div class="row row-icon danger" id="wipeBtn">
         <div class="row-icon-badge" style="background:rgba(255,59,48,.12)">🗑️</div>
         <div class="row-text">
@@ -1544,6 +1552,9 @@
     $("a2hsBackdrop").classList.remove("open");
   }
   $("a2hsRow").addEventListener("click", openA2HS);
+  $("feedbackRow").addEventListener("click", function(){
+    if(window.gtag) gtag("event", "feedback_clicked");
+  });
   $("installBadge").addEventListener("click", openA2HS);
   $("a2hsClose").addEventListener("click", closeA2HS);
   $("a2hsBackdrop").addEventListener("click", function(e){ if(e.target===$("a2hsBackdrop")) closeA2HS(); });
