@@ -663,7 +663,7 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1", TEUKUPACHIEVEDKEY="teukup_achieved_v1";
 
   // 국군 체력검정 기준표 (제389조 관련) — 성별 × 연령 13구간 × 종목별 [특급,1급,2급,3급] 컷.
   // 반복 종목(팔굽/윗몸)은 각 컷이 "이상", 3km 달리기는 각 컷이 초 단위 "이하".
@@ -1098,6 +1098,16 @@
   }
   $("todayBtn").addEventListener("click", function(){ $("detailDate").value=today(); });
 
+  // ---- input_started: "봤다" vs "써보려 했다"를 가르는 지표, 세션당 1회만 ----
+  // #dIn1/#dIn2 are rebuilt via innerHTML on every buildInput() call, so listen
+  // on the stable wrapper instead of re-attaching after each rebuild.
+  var inputStartedFired = false;
+  $("detailInputWrap").addEventListener("input", function(){
+    if(inputStartedFired) return;
+    inputStartedFired = true;
+    if(window.gtag) gtag("event", "input_started");
+  });
+
   function openDetail(key, presetDate, presetVal){
     currentDetailKey=key;
     var ex=EXES[key];
@@ -1165,7 +1175,10 @@
 
     var gr=gradeOf(key,val);
     if(window.gtag){
-      gtag("event", "record_saved", { exercise: key, grade: gradeLabel(gr), mode: launchMode });
+      gtag("event", "record_saved", {
+        exercise: key, grade: gradeLabel(gr), mode: launchMode,
+        age_group: age, record_count: records.length, is_teukup: gr===4 ? 1 : 0
+      });
     }
     if(gr===4){
       showToast("🎉 "+exName(key)+" 특급 달성!", true);
@@ -1174,6 +1187,16 @@
       g.classList.remove("pulse"); void g.offsetWidth; g.classList.add("pulse");
     }else{
       showToast("저장했어요 ✓");
+    }
+
+    // ---- teukup_achieved: fire once, the moment all 3 exercises first hit 특급 ----
+    var allTeukup = Object.keys(EXES).every(function(k){
+      var r=latestValue(k);
+      return r && gradeOf(k, r[k])===4;
+    });
+    if(allTeukup && localStorage.getItem(TEUKUPACHIEVEDKEY)!=="1"){
+      localStorage.setItem(TEUKUPACHIEVEDKEY, "1");
+      if(window.gtag) gtag("event", "teukup_achieved");
     }
   });
 
@@ -1443,6 +1466,11 @@
   // ---- init ----
   renderAll();
   setTab("home");
+
+  // ---- returning_user: 저장된 기록을 갖고 다시 열었을 때 (리텐션 핵심 지표) ----
+  if(records.length>0 && window.gtag){
+    gtag("event", "returning_user", { saved_records: records.length });
+  }
 
   // ---- splash screen ----
   // Full (but trimmed) brand moment on the first open of a session; near-instant
