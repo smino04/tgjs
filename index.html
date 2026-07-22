@@ -463,15 +463,15 @@
     <div class="page-header"><h1>성장 추이</h1></div>
 
     <div class="segmented" id="recordViewSeg" role="group" aria-label="보기 방식 선택" style="margin-bottom:16px">
-      <button data-view="trend" aria-pressed="true">추이</button>
-      <button data-view="calendar" aria-pressed="false">캘린더</button>
+      <button data-view="calendar" aria-pressed="true">캘린더</button>
+      <button data-view="trend" aria-pressed="false">추이</button>
     </div>
 
-    <div id="recordTrendView">
+    <div id="recordTrendView" style="display:none">
       <div id="exCards"></div>
     </div>
 
-    <div id="recordCalendarView" style="display:none">
+    <div id="recordCalendarView">
       <div class="cal-nav">
         <button type="button" id="calPrev" aria-label="이전 달">‹</button>
         <div class="cal-title" id="calTitle">2026년 7월</div>
@@ -1757,9 +1757,22 @@
     b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); });
   });
 
+  // ---- tap the page title to force a full refresh of that same page ----
+  // Handy for grabbing a newly deployed version without hunting for a
+  // browser refresh button, especially inside the home-screen standalone app.
+  var LASTTABKEY="teukup_lasttab_v1";
+  Array.prototype.forEach.call(document.querySelectorAll(".page-header h1"), function(h1){
+    h1.style.cursor="pointer";
+    h1.addEventListener("click", function(){
+      var activeScreen=document.querySelector(".screen.active");
+      if(activeScreen) sessionStorage.setItem(LASTTABKEY, activeScreen.id.replace("screen-",""));
+      location.reload();
+    });
+  });
+
   // ---- init ----
   renderAll();
-  setTab("home");
+  setTab(sessionStorage.getItem(LASTTABKEY) || "home");
   showOnboardingIfNeeded();
 
   // ---- returning_user: 저장된 기록을 갖고 다시 열었을 때 (리텐션 핵심 지표) ----
