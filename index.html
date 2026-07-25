@@ -39,6 +39,9 @@
   gtag('js', new Date());
   gtag('config', 'G-G4S1XTJ5Q1');
 </script>
+
+<!-- Umami -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="93ca0025-151c-4e9e-bcc0-f7af3256ff80"></script>
 <style>
   :root{
     --bg:#F2F2F7; --surface:#FFFFFF; --line:#E3E3E8;
@@ -1242,6 +1245,7 @@
     if(inputStartedFired) return;
     inputStartedFired = true;
     if(window.gtag) gtag("event", "input_started");
+    if(window.umami) umami.track("input_started");
   });
 
   function openDetail(key, presetDate){
@@ -1316,6 +1320,12 @@
         age_group: age, record_count: records.length, is_teukup: gr===4 ? 1 : 0
       });
     }
+    if(window.umami){
+      umami.track("record_saved", {
+        exercise: key, grade: gradeLabel(gr), mode: launchMode,
+        age_group: age, record_count: records.length, is_teukup: gr===4 ? 1 : 0
+      });
+    }
     if(gr===4){
       showToast("🎉 "+exName(key)+" 특급 달성!", true);
       burstConfetti();
@@ -1333,6 +1343,7 @@
     if(allTeukup && localStorage.getItem(TEUKUPACHIEVEDKEY)!=="1"){
       localStorage.setItem(TEUKUPACHIEVEDKEY, "1");
       if(window.gtag) gtag("event", "teukup_achieved");
+      if(window.umami) umami.track("teukup_achieved");
     }
   });
 
@@ -1698,6 +1709,7 @@
     if(inputStartedFired) return;
     inputStartedFired = true;
     if(window.gtag) gtag("event", "input_started");
+    if(window.umami) umami.track("input_started");
   });
 
   $("obSaveBtn").addEventListener("click", function(){
@@ -1776,8 +1788,9 @@
   showOnboardingIfNeeded();
 
   // ---- returning_user: 저장된 기록을 갖고 다시 열었을 때 (리텐션 핵심 지표) ----
-  if(records.length>0 && window.gtag){
-    gtag("event", "returning_user", { saved_records: records.length });
+  if(records.length>0){
+    if(window.gtag) gtag("event", "returning_user", { saved_records: records.length });
+    if(window.umami) umami.track("returning_user", { saved_records: records.length });
   }
 
   // ---- splash screen ----
