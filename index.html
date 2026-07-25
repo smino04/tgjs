@@ -1603,6 +1603,7 @@
   // Android/Chrome fires this when the user actually installs the PWA.
   window.addEventListener("appinstalled", function(){
     if(window.gtag) gtag("event", "app_installed", { platform: platform });
+    if(window.umami) umami.track("app_installed", { platform: platform });
   });
 
   // ---- first-run onboarding: 성별 → 연령 → 첫 기록, then prompt A2HS ----
