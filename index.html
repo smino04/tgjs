@@ -1600,6 +1600,9 @@
   if(window.gtag){
     gtag("event", "app_open", { mode: launchMode, platform: platform });
   }
+  if(window.umami){
+    umami.track("app_open", { mode: launchMode, platform: platform });
+  }
   // Android/Chrome fires this when the user actually installs the PWA.
   window.addEventListener("appinstalled", function(){
     if(window.gtag) gtag("event", "app_installed", { platform: platform });
