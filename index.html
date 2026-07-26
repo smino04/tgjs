@@ -379,13 +379,13 @@
   .cal-day.pad{visibility:hidden; pointer-events:none}
   .cal-day.today{border-color:var(--tint); border-width:2px}
   .cal-day.selected{background:var(--tint); border-color:var(--tint); color:#fff}
-  .cal-day .cal-dots{display:flex; gap:3px; height:6px}
-  .cal-day .cal-dots span{width:6px; height:6px; border-radius:50%; background:var(--tint)}
-  .cal-day .cal-dots span.ex-push{background:#F0A020}
-  .cal-day .cal-dots span.ex-sit{background:#FF5A36}
-  .cal-day .cal-dots span.ex-run{background:#3B82F6}
-  .cal-day .cal-dots span.gold{box-shadow:0 0 0 1.5px var(--gold)}
-  .cal-day.selected .cal-dots span{background:#fff; box-shadow:none; opacity:.85}
+  .cal-day .cal-tags{display:flex; flex-direction:column; align-items:center; gap:0; line-height:1.15}
+  .cal-day .cal-tags span{font-size:6.5px; font-weight:800; letter-spacing:-.02em}
+  .cal-day .cal-tags span.ex-push{color:#F0A020}
+  .cal-day .cal-tags span.ex-sit{color:#FF5A36}
+  .cal-day .cal-tags span.ex-run{color:#3B82F6}
+  .cal-day .cal-tags span.gold{color:var(--gold)}
+  .cal-day.selected .cal-tags span{color:#fff; opacity:.9}
   .cal-detail-wrap{display:flex; align-items:stretch; gap:8px; margin-bottom:9px}
   .cal-detail-row{
     flex:1; min-width:0; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
@@ -831,9 +831,9 @@
   };
 
   var EXES={
-    push:{name:"팔굽혀펴기", emoji:"💪", unit:"개", isTime:false},
-    sit:{name:"윗몸일으키기", emoji:"🔥", unit:"개", isTime:false},
-    run:{name:"3km 달리기", emoji:"🏃", unit:"", isTime:true}
+    push:{name:"팔굽혀펴기", emoji:"💪", unit:"개", isTime:false, short:"팔굽"},
+    sit:{name:"윗몸일으키기", emoji:"🔥", unit:"개", isTime:false, short:"윗몸"},
+    run:{name:"3km 달리기", emoji:"🏃", unit:"", isTime:true, short:"3km"}
   };
 
   var gender = localStorage.getItem(GENDERKEY) || "male";
@@ -1094,11 +1094,11 @@
     for(var d=1; d<=daysInMonth; d++){
       var dateStr=ymd(y,m,d);
       var rec=recordsOnDate(dateStr)[0];
-      var dots = rec ? '<div class="cal-dots">'+Object.keys(EXES).filter(function(k){ return typeof rec[k]==="number"; }).map(function(k){
-        return '<span class="ex-'+k+(gradeOf(k, rec[k])===4?' gold':'')+'"></span>';
+      var tags = rec ? '<div class="cal-tags">'+Object.keys(EXES).filter(function(k){ return typeof rec[k]==="number"; }).map(function(k){
+        return '<span class="ex-'+k+(gradeOf(k, rec[k])===4?' gold':'')+'">'+EXES[k].short+'</span>';
       }).join("")+'</div>' : '';
       var cls="cal-day"+(dateStr===todayStr?" today":"")+(dateStr===calState.selected?" selected":"");
-      cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">'+d+dots+'</button>';
+      cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">'+d+tags+'</button>';
     }
 
     $("calGrid").innerHTML = cells;
