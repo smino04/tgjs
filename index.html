@@ -370,22 +370,25 @@
   .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:8px}
   .cal-weekday{text-align:center; font-size:11px; font-weight:700; color:var(--ink-faint); padding-bottom:4px}
   .cal-day{
-    aspect-ratio:1; border-radius:12px; background:var(--surface); border:1px solid var(--line);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    font-size:13px; font-weight:600; color:var(--ink); cursor:pointer;
+    min-height:66px; border-radius:12px; background:var(--surface); border:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:5px 3px 4px; font-size:12px; font-weight:700; color:var(--ink); cursor:pointer;
     transition:background-color .3s, border-color .3s, transform .15s;
   }
-  .cal-day:active{transform:scale(.92)}
+  .cal-day:active{transform:scale(.95)}
   .cal-day.pad{visibility:hidden; pointer-events:none}
   .cal-day.today{border-color:var(--tint); border-width:2px}
   .cal-day.selected{background:var(--tint); border-color:var(--tint); color:#fff}
-  .cal-day .cal-tags{display:flex; flex-direction:column; align-items:center; gap:0; line-height:1.15}
-  .cal-day .cal-tags span{font-size:6.5px; font-weight:800; letter-spacing:-.02em}
-  .cal-day .cal-tags span.ex-push{color:#F0A020}
-  .cal-day .cal-tags span.ex-sit{color:#FF5A36}
-  .cal-day .cal-tags span.ex-run{color:#3B82F6}
-  .cal-day .cal-tags span.gold{color:var(--gold)}
-  .cal-day.selected .cal-tags span{color:#fff; opacity:.9}
+  .cal-day .cal-daynum{align-self:flex-start; margin-left:2px}
+  .cal-day .cal-tags{display:flex; flex-direction:column; gap:2px; width:100%; margin-top:1px}
+  .cal-day .cal-tags span{
+    display:block; width:100%; border-radius:5px; padding:2.5px 0; text-align:center;
+    font-size:8.5px; font-weight:800; letter-spacing:-.02em; color:#fff; line-height:1.1;
+  }
+  .cal-day .cal-tags span.ex-push{background:#F0A020}
+  .cal-day .cal-tags span.ex-sit{background:#FF5A36}
+  .cal-day .cal-tags span.ex-run{background:#3B82F6}
+  .cal-day .cal-tags span.gold{background:var(--gold); color:#241c00}
   .cal-detail-wrap{display:flex; align-items:stretch; gap:8px; margin-bottom:9px}
   .cal-detail-row{
     flex:1; min-width:0; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
@@ -1098,7 +1101,7 @@
         return '<span class="ex-'+k+(gradeOf(k, rec[k])===4?' gold':'')+'">'+EXES[k].short+'</span>';
       }).join("")+'</div>' : '';
       var cls="cal-day"+(dateStr===todayStr?" today":"")+(dateStr===calState.selected?" selected":"");
-      cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">'+d+tags+'</button>';
+      cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'"><span class="cal-daynum">'+d+'</span>'+tags+'</button>';
     }
 
     $("calGrid").innerHTML = cells;
