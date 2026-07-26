@@ -1782,6 +1782,7 @@
     h1.addEventListener("click", function(){
       var activeScreen=document.querySelector(".screen.active");
       if(activeScreen) sessionStorage.setItem(LASTTABKEY, activeScreen.id.replace("screen-",""));
+      sessionStorage.setItem("teukup_skip_splash", "1"); // plain refresh, no logo moment
       location.reload();
     });
   });
@@ -1799,14 +1800,21 @@
 
   // ---- splash screen ----
   // Full (but trimmed) brand moment on the first open of a session; near-instant
-  // on same-session reloads so daily/return use isn't gated behind a long wait.
-  var splashSeen = false;
-  try{ splashSeen = sessionStorage.getItem("teukup_splash_seen")==="1"; }catch(e){}
-  setTimeout(function(){
-    var splash=$("splash");
-    splash.classList.add("hide");
-    splash.addEventListener("transitionend", function(){ splash.remove(); }, {once:true});
-  }, splashSeen ? 250 : 1500);
+  // on same-session reloads so daily/return use isn't gated behind a long wait;
+  // skipped entirely for an explicit manual refresh (tapping the page title).
+  var skipSplash = false;
+  try{ skipSplash = sessionStorage.getItem("teukup_skip_splash")==="1"; sessionStorage.removeItem("teukup_skip_splash"); }catch(e){}
+  if(skipSplash){
+    $("splash").remove();
+  }else{
+    var splashSeen = false;
+    try{ splashSeen = sessionStorage.getItem("teukup_splash_seen")==="1"; }catch(e){}
+    setTimeout(function(){
+      var splash=$("splash");
+      splash.classList.add("hide");
+      splash.addEventListener("transitionend", function(){ splash.remove(); }, {once:true});
+    }, splashSeen ? 250 : 1500);
+  }
   try{ sessionStorage.setItem("teukup_splash_seen", "1"); }catch(e){}
 })();
 
