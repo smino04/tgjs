@@ -385,10 +385,9 @@
     display:block; width:100%; border-radius:5px; padding:2.5px 0; text-align:center;
     font-size:8.5px; font-weight:800; letter-spacing:-.02em; color:#fff; line-height:1.1;
   }
-  .cal-day .cal-tags span.ex-push{background:#F0A020}
-  .cal-day .cal-tags span.ex-sit{background:#FF5A36}
-  .cal-day .cal-tags span.ex-run{background:#3B82F6}
-  .cal-day .cal-tags span.gold{background:var(--gold); color:#241c00}
+  .cal-day .cal-tags span.ex-push{background:#A9772F}
+  .cal-day .cal-tags span.ex-sit{background:#A6503F}
+  .cal-day .cal-tags span.ex-run{background:#3F6B7A}
   .cal-detail-wrap{display:flex; align-items:stretch; gap:8px; margin-bottom:9px}
   .cal-detail-row{
     flex:1; min-width:0; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
@@ -1098,7 +1097,7 @@
       var dateStr=ymd(y,m,d);
       var rec=recordsOnDate(dateStr)[0];
       var tags = rec ? '<div class="cal-tags">'+Object.keys(EXES).filter(function(k){ return typeof rec[k]==="number"; }).map(function(k){
-        return '<span class="ex-'+k+(gradeOf(k, rec[k])===4?' gold':'')+'">'+EXES[k].short+'</span>';
+        return '<span class="ex-'+k+'">'+EXES[k].short+'</span>';
       }).join("")+'</div>' : '';
       var cls="cal-day"+(dateStr===todayStr?" today":"")+(dateStr===calState.selected?" selected":"");
       cells += '<button type="button" class="'+cls+'" data-date="'+dateStr+'"><span class="cal-daynum">'+d+'</span>'+tags+'</button>';
