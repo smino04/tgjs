@@ -1425,25 +1425,56 @@
     drawGraph(key);
   }
 
-  // ---- save feedback: a tiny synthesized sound, no audio file needed ----
+  // ---- save feedback: a richer synthesized sound, no audio file needed ----
+  // Layered sine harmonics (bell-ish timbre) through a lowpass filter, plus a
+  // tiny percussive "click" transient up front for tactile punch. 특급 gets
+  // a full ascending arpeggio + a sparkly high tail instead of just 2 notes.
   var audioCtx = null;
-  function playTone(freq, dur, delay){
-    try{
-      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      var t0 = audioCtx.currentTime + (delay||0);
-      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, t0);
+  function ensureAudioCtx(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function playClick(t0){
+    var ctx=ensureAudioCtx();
+    var osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type="square";
+    osc.frequency.setValueAtTime(1800, t0);
+    gain.gain.setValueAtTime(0.12, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.02);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0+0.03);
+  }
+  function playBell(freq, t0, dur, peak){
+    var ctx=ensureAudioCtx();
+    var filter=ctx.createBiquadFilter();
+    filter.type="lowpass"; filter.frequency.value=freq*4;
+    filter.connect(ctx.destination);
+    [1,2.01,3.0].forEach(function(mult,i){
+      var osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type="sine";
+      osc.frequency.setValueAtTime(freq*mult, t0);
+      var p=peak*(i===0?1:0.4/mult);
       gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.exponentialRampToValueAtTime(0.18, t0+0.015);
+      gain.gain.exponentialRampToValueAtTime(p, t0+0.012);
       gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(t0); osc.stop(t0+dur+0.02);
-    }catch(e){}
+      osc.connect(gain); gain.connect(filter);
+      osc.start(t0); osc.stop(t0+dur+0.03);
+    });
   }
   function playSaveSound(gold){
-    if(gold){ playTone(880,.14,0); playTone(1318.5,.22,.09); } // little two-note "ta-da"
-    else{ playTone(720,.11,0); }
+    try{
+      var ctx=ensureAudioCtx(), t0=ctx.currentTime;
+      if(gold){
+        playClick(t0);
+        var notes=[523.25,659.25,783.99,1046.50]; // C5 E5 G5 C6, rising "level up" arpeggio
+        notes.forEach(function(f,i){ playBell(f, t0+0.02+i*0.085, 0.38, 0.17); });
+        playBell(1567.98, t0+0.02+notes.length*0.085+0.05, 0.5, 0.09); // sparkle tail
+      }else{
+        playClick(t0);
+        playBell(659.25, t0+0.015, 0.16, 0.15);        // E5
+        playBell(987.77, t0+0.015+0.07, 0.22, 0.13);    // B5
+      }
+    }catch(e){}
   }
 
   // ---- save feedback: toast + confetti burst on 특급 ----
