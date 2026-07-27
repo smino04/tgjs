@@ -224,6 +224,7 @@
   .input-row{display:flex; align-items:center; gap:8px}
   .input-row + .input-row{margin-top:8px}
   .detail-target{font-size:12px; color:var(--ink-faint); margin-top:8px}
+  .detail-predict{font-size:12px; color:var(--tint); margin-top:4px; font-weight:700}
   .field-input{display:flex; align-items:center; gap:6px; flex:1; min-width:0}
   .field-input input{
     width:100%; max-width:80px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
@@ -595,6 +596,7 @@
       </div>
       <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none">이 날짜 기록 삭제</button>
       <div class="detail-target" id="detailTarget"></div>
+      <div class="detail-predict" id="detailPredict"></div>
     </div>
 
     <div class="graph-card">
@@ -1180,6 +1182,55 @@
     var gap=gapText(key, rec[key]);
     return gap ? base+" · 목표까지 "+gap : base+" · 이미 목표 달성했어요 🎉";
   }
+
+  // ---- trend prediction: asymptotic exponential approach to the 특급 cutoff ----
+  // Growth near a hard ceiling slows down (diminishing returns), so a plain
+  // linear trend overshoots. Anchoring the ceiling on the official 특급 cutoff
+  // (with headroom) turns the 3-parameter exponential-approach curve
+  // y=L-(L-y0)e^-kt into a plain linear regression of ln(gap-to-ceiling) vs
+  // time, which stays numerically stable even with just a handful of points.
+  function predictGoalDays(key){
+    var ex=EXES[key];
+    var pts = records.filter(function(r){ return typeof r[key]==="number"; })
+      .sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
+    if(pts.length<3) return null;
+
+    var lower=ex.isTime, top=topCut(key);
+    var values=pts.map(function(p){ return p[key]; });
+    var maxVal=Math.max.apply(null, values), minVal=Math.min.apply(null, values);
+    var L = lower ? Math.min(top*0.85, minVal*0.95) : Math.max(top*1.15, maxVal*1.05);
+
+    var t0 = new Date(pts[0].date+"T00:00:00").getTime();
+    var xs = pts.map(function(p){ return (new Date(p.date+"T00:00:00").getTime()-t0)/86400000; });
+    var zs = values.map(function(v){ return Math.log(Math.abs(L-v)); });
+
+    var n=xs.length, sumX=0, sumZ=0, sumXZ=0, sumXX=0;
+    for(var i=0;i<n;i++){ sumX+=xs[i]; sumZ+=zs[i]; sumXZ+=xs[i]*zs[i]; sumXX+=xs[i]*xs[i]; }
+    var denom = n*sumXX - sumX*sumX;
+    if(denom===0) return null;
+    var slope=(n*sumXZ - sumX*sumZ)/denom;
+    var intercept=(sumZ - slope*sumX)/n;
+    if(!(slope<-1e-6)) return null; // gap isn't reliably shrinking -> don't guess
+
+    var goal=goalCut(key);
+    var gapTarget=Math.abs(L-goal);
+    if(gapTarget<=0) return null;
+    var xTarget=(Math.log(gapTarget)-intercept)/slope;
+    var xNow=(Date.now()-t0)/86400000;
+    var daysRemaining=xTarget-xNow;
+
+    if(daysRemaining<=0) return {days:0};
+    if(daysRemaining>180) return null; // extrapolating that far out isn't trustworthy
+    return {days:Math.round(daysRemaining)};
+  }
+  function predictText(key){
+    var rec=latestValue(key);
+    if(!rec) return "";
+    if(!gapText(key, rec[key])) return ""; // already at/past goal
+    var p=predictGoalDays(key);
+    if(!p) return "";
+    return p.days<=0 ? "📈 이 추세라면 곧 목표에 도달할 것 같아요" : "📈 이 추세라면 약 "+p.days+"일 후 목표 도달 예상";
+  }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
     if(ex.isTime){
@@ -1244,6 +1295,7 @@
     var ex=EXES[key];
     $("detailTitle").textContent=ex.emoji+" "+exName(key);
     $("detailTarget").textContent=targetText(key);
+    $("detailPredict").textContent=predictText(key);
     $("emptyBadge").textContent=ex.emoji;
     fillInputCard(presetDate);
     renderStats(key);
@@ -1258,6 +1310,7 @@
   function refreshDetail(key){
     renderAll();
     $("detailTarget").textContent=targetText(key);
+    $("detailPredict").textContent=predictText(key);
     renderStats(key);
     drawGraph(key);
   }
@@ -1477,6 +1530,7 @@
     if(currentDetailKey){
       $("detailTitle").textContent=EXES[currentDetailKey].emoji+" "+exName(currentDetailKey);
       $("detailTarget").textContent=targetText(currentDetailKey);
+      $("detailPredict").textContent=predictText(currentDetailKey);
       renderStats(currentDetailKey);
       drawGraph(currentDetailKey);
     }
