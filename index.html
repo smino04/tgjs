@@ -149,6 +149,14 @@
   }
 
   .foot{margin-top:22px; padding:0 4px; font-size:12px; color:var(--ink-faint); line-height:1.8}
+  .std-table-wrap{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden}
+  .std-table{width:100%; border-collapse:collapse; font-size:12.5px}
+  .std-table th, .std-table td{padding:9px 6px; text-align:center; white-space:nowrap}
+  .std-table th{font-size:11px; color:var(--ink-faint); font-weight:700; border-bottom:1px solid var(--line)}
+  .std-table td:first-child, .std-table th:first-child{text-align:left; padding-left:12px; color:var(--ink-dim); font-weight:600}
+  .std-table tr:not(:last-child) td{border-bottom:1px solid var(--line)}
+  .std-table td.g4{color:var(--gold); font-weight:800}
+  .std-table td.g3{color:var(--tint); font-weight:700}
 
   /* ---- first-run onboarding: 성별 → 연령 → 첫 기록 ---- */
   #onboarding .detail-body{padding-top:calc(env(safe-area-inset-top, 20px) + 28px)}
@@ -236,6 +244,12 @@
   }
   .rpe-btn.selected{background:var(--tint); border-color:var(--tint); color:#fff}
   .rpe-btn:active{opacity:.7}
+  .rpe-help-btn{
+    display:inline-grid; place-items:center; width:16px; height:16px; margin-left:2px;
+    background:var(--line); color:var(--ink-dim); border:0; border-radius:50%;
+    font-size:10px; font-weight:800; cursor:pointer; font-family:inherit; vertical-align:middle;
+  }
+  .rpe-desc{font-size:11.5px; color:var(--ink-faint); line-height:1.6; margin-bottom:8px; background:var(--bg); border-radius:9px; padding:8px 10px}
   .field-input{display:flex; align-items:center; gap:6px; flex:1; min-width:0}
   .field-input input{
     width:100%; max-width:80px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
@@ -549,6 +563,14 @@
         </div>
         <span class="ex-chev">›</span>
       </div>
+      <div class="row row-icon" id="stdTableRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:var(--tint-bg)">📋</div>
+        <div class="row-text">
+          <div class="row-label">기준표 보기</div>
+          <div class="row-desc">국군 체력검정 기준표 (제389조 관련) 전체</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </div>
       <a class="row row-icon" id="feedbackRow" href="https://docs.google.com/forms/d/e/1FAIpQLSdC7no7CUGFGRyPI2F8Z_ZGPXM1uS6aX6KvQ7J-ys1z7LCigw/viewform?usp=publish-editor" target="_blank" rel="noopener" style="text-decoration:none; color:inherit">
         <div class="row-icon-badge" style="background:rgba(255,149,0,.12)">💬</div>
         <div class="row-text">
@@ -606,7 +628,13 @@
         <button class="btn" id="detailSaveBtn">저장</button>
       </div>
       <div class="rpe-group" id="rpeGroup" style="display:none">
-        <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span></div>
+        <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span>
+          <button type="button" class="rpe-help-btn" id="rpeHelpBtn" aria-label="RPE 설명 보기">?</button>
+        </div>
+        <div class="rpe-desc" id="rpeDesc" style="display:none">
+          숫자가 클수록 힘들게 뛴 거예요 — 다음 예측(추세)이 쉬운 날에 흔들리지 않게 도와줘요.<br>
+          <b>20</b> 전력 질주 · <b>15</b> 힘들지만 끝까지 유지 가능 · <b>10</b> 가볍게 조깅
+        </div>
         <div class="rpe-picker" id="rpePicker"></div>
       </div>
       <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none">이 날짜 기록 삭제</button>
@@ -646,6 +674,28 @@
         <select id="ageSelect" class="age-select"></select>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ 기준표 보기 (슬라이드 화면) ============ -->
+<div class="detail" id="stdTableDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="stdTableBack">‹ 설정</button>
+    <span class="detail-title">기준표</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
+    <div class="segmented" id="stdTableGenderSeg" role="group" aria-label="성별 선택" style="margin-bottom:10px">
+      <button data-gender="male" aria-pressed="true">남군</button>
+      <button data-gender="female" aria-pressed="false">여군</button>
+    </div>
+    <div class="segmented" id="stdTableExSeg" role="group" aria-label="종목 선택" style="margin-bottom:16px">
+      <button data-ex="push" aria-pressed="true">팔굽혀펴기</button>
+      <button data-ex="sit" aria-pressed="false">윗몸일으키기</button>
+      <button data-ex="run" aria-pressed="false">3km 달리기</button>
+    </div>
+    <div class="std-table-wrap" id="stdTableWrap"></div>
+    <p class="foot">기준 · 국군 체력검정 기준표 (제389조 관련)<br>반복 종목은 "이상", 3km 달리기는 "이하" 기준입니다.</p>
   </div>
 </div>
 
@@ -1286,6 +1336,10 @@
   }
 
   // ---- RPE picker (run only) ----
+  $("rpeHelpBtn").addEventListener("click", function(){
+    var box=$("rpeDesc");
+    box.style.display = box.style.display==="none" ? "block" : "none";
+  });
   function renderRpePicker(selected){
     var box=$("rpePicker"), html="";
     for(var r=RPE_MIN; r<=RPE_MAX; r++){
@@ -1371,6 +1425,27 @@
     drawGraph(key);
   }
 
+  // ---- save feedback: a tiny synthesized sound, no audio file needed ----
+  var audioCtx = null;
+  function playTone(freq, dur, delay){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var t0 = audioCtx.currentTime + (delay||0);
+      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.18, t0+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t0); osc.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  function playSaveSound(gold){
+    if(gold){ playTone(880,.14,0); playTone(1318.5,.22,.09); } // little two-note "ta-da"
+    else{ playTone(720,.11,0); }
+  }
+
   // ---- save feedback: toast + confetti burst on 특급 ----
   function showToast(text, gold){
     var t=$("toast");
@@ -1430,6 +1505,7 @@
         age_group: age, record_count: records.length, is_teukup: gr===4 ? 1 : 0
       });
     }
+    playSaveSound(gr===4);
     if(gr===4){
       showToast("🎉 "+exName(key)+" 특급 달성!", true);
       burstConfetti();
@@ -1600,6 +1676,54 @@
   // ---- settings: 기준 sub-page ----
   $("stdRow").addEventListener("click", function(){ $("stdDetail").classList.add("open"); });
   $("stdBack").addEventListener("click", function(){ $("stdDetail").classList.remove("open"); });
+
+  // ---- settings: 기준표 보기 sub-page ----
+  var stdTableGender=gender, stdTableEx="push";
+  function renderStdTable(){
+    var ex=EXES[stdTableEx];
+    var rows = AGE_BANDS.map(function(b){
+      var c = STD[stdTableGender][stdTableEx][b.key]; // [특급,1급,2급,3급]
+      var fmt = function(v){ return ex.isTime ? fmtRun(v) : v+ex.unit; };
+      return '<tr><td>'+b.label+'</td>'
+        +'<td class="g4">'+fmt(c[0])+'</td>'
+        +'<td class="g3">'+fmt(c[1])+'</td>'
+        +'<td>'+fmt(c[2])+'</td>'
+        +'<td>'+fmt(c[3])+'</td></tr>';
+    }).join("");
+    $("stdTableWrap").innerHTML =
+      '<table class="std-table"><thead><tr><th>연령</th><th>특급</th><th>1급</th><th>2급</th><th>3급</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table>';
+  }
+  $("stdTableRow").addEventListener("click", function(){
+    stdTableGender=gender; stdTableEx="push";
+    Array.prototype.forEach.call($("stdTableGenderSeg").querySelectorAll("button"), function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-gender")===stdTableGender?"true":"false");
+    });
+    Array.prototype.forEach.call($("stdTableExSeg").querySelectorAll("button"), function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-ex")===stdTableEx?"true":"false");
+    });
+    renderStdTable();
+    $("stdTableDetail").classList.add("open");
+  });
+  $("stdTableBack").addEventListener("click", function(){ $("stdTableDetail").classList.remove("open"); });
+  Array.prototype.forEach.call($("stdTableGenderSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      stdTableGender=b.getAttribute("data-gender");
+      Array.prototype.forEach.call($("stdTableGenderSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      renderStdTable();
+    });
+  });
+  Array.prototype.forEach.call($("stdTableExSeg").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      stdTableEx=b.getAttribute("data-ex");
+      Array.prototype.forEach.call($("stdTableExSeg").querySelectorAll("button"), function(x){
+        x.setAttribute("aria-pressed", x===b?"true":"false");
+      });
+      renderStdTable();
+    });
+  });
 
   // ---- settings: 일정 sub-page ----
   $("scheduleRow").addEventListener("click", function(){ $("scheduleDetail").classList.add("open"); });
@@ -1845,6 +1969,7 @@
     box.innerHTML = '<div class="ob-result-val">'+exName(key)+' '+(EXES[key].isTime?fmtRun(val):val+EXES[key].unit)+'</div>'
       +gradePill(gr)
       +'<div class="ob-result-sub">'+(gr===4 ? "바로 특급이시네요! 🎉" : targetText(key))+'</div>';
+    playSaveSound(gr===4);
     if(gr===4) burstConfetti();
     $("obFinish").style.display="block";
   });
