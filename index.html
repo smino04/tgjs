@@ -225,6 +225,17 @@
   .input-row + .input-row{margin-top:8px}
   .detail-target{font-size:12px; color:var(--ink-faint); margin-top:8px}
   .detail-predict{font-size:12px; color:var(--tint); margin-top:4px; font-weight:700}
+  .rpe-group{margin-top:12px}
+  .rpe-label{font-size:12px; font-weight:600; color:var(--ink-dim); margin-bottom:6px}
+  .rpe-hint{font-weight:400; color:var(--ink-faint)}
+  .rpe-picker{display:grid; grid-template-columns:repeat(5,1fr); gap:5px}
+  .rpe-btn{
+    background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
+    font-family:inherit; font-size:13px; font-weight:700; border-radius:9px; padding:8px 0; cursor:pointer;
+    transition:background-color .15s, border-color .15s, color .15s;
+  }
+  .rpe-btn.selected{background:var(--tint); border-color:var(--tint); color:#fff}
+  .rpe-btn:active{opacity:.7}
   .field-input{display:flex; align-items:center; gap:6px; flex:1; min-width:0}
   .field-input input{
     width:100%; max-width:80px; background:var(--bg); border:1px solid var(--line); color:var(--ink);
@@ -594,6 +605,10 @@
         <div class="field-input" id="detailInputWrap"></div>
         <button class="btn" id="detailSaveBtn">저장</button>
       </div>
+      <div class="rpe-group" id="rpeGroup" style="display:none">
+        <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span></div>
+        <div class="rpe-picker" id="rpePicker"></div>
+      </div>
       <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none">이 날짜 기록 삭제</button>
       <div class="detail-target" id="detailTarget"></div>
       <div class="detail-predict" id="detailPredict"></div>
@@ -840,11 +855,25 @@
     run:{name:"3km 달리기", emoji:"🏃", unit:"", isTime:true, short:"3km"}
   };
 
+  // ---- RPE effort-ratio adjustment (3km 달리기 전용) ----
+  // 최대 강도로 안 뛴 날의 기록은 트렌드를 흐리니까, 체감 강도(RPE 6~20)를
+  // 입력해두면 그 기록을 "전력으로 뛰었다면 이 정도였을 시간"으로 환산해서
+  // 예측 엔진에만 반영한다(등급 판정에 쓰이는 실제 기록은 그대로 둠).
+  var RPE_MIN=6, RPE_MAX=20, RPE_K=0.035;
+  function effortRatio(rpe){
+    return Math.max(0.55, Math.min(1.0, 1 - RPE_K*(RPE_MAX-rpe)));
+  }
+  function effortAdjustedRunTime(rec){
+    if(typeof rec.rpe==="number") return rec.run*effortRatio(rec.rpe);
+    return rec.run; // RPE 안 남겼으면 최대 강도로 간주 -> 보정 없음
+  }
+
   var gender = localStorage.getItem(GENDERKEY) || "male";
   var age = localStorage.getItem(AGEKEY) || "u25";
   var goalGrade = parseInt(localStorage.getItem(GOALKEY), 10) || 4; // 1=3급 .. 4=특급
   var records = load();
   var currentDetailKey = null;
+  var currentRpe = null; // selected RPE (6~20) for the run entry currently being edited
 
   var $=function(id){return document.getElementById(id)};
   function load(){ try{return JSON.parse(localStorage.getItem(STORE))||[]}catch(e){return[]} }
@@ -1196,7 +1225,8 @@
     if(pts.length<3) return null;
 
     var lower=ex.isTime, top=topCut(key);
-    var values=pts.map(function(p){ return p[key]; });
+    // 3km 달리기는 RPE가 있으면 전력등가 시간으로 보정해서 노이즈(살살 뛴 날)를 줄인다.
+    var values=pts.map(function(p){ return key==="run" ? effortAdjustedRunTime(p) : p[key]; });
     var maxVal=Math.max.apply(null, values), minVal=Math.min.apply(null, values);
     var L = lower ? Math.min(top*0.85, minVal*0.95) : Math.max(top*1.15, maxVal*1.05);
 
@@ -1229,7 +1259,9 @@
     if(!gapText(key, rec[key])) return ""; // already at/past goal
     var p=predictGoalDays(key);
     if(!p) return "";
-    return p.days<=0 ? "📈 이 추세라면 곧 목표에 도달할 것 같아요" : "📈 이 추세라면 약 "+p.days+"일 후 목표 도달 예상";
+    var usedRpe = key==="run" && records.some(function(r){ return typeof r.run==="number" && typeof r.rpe==="number"; });
+    var suffix = usedRpe ? " (체감 강도 반영)" : "";
+    return (p.days<=0 ? "📈 이 추세라면 곧 목표에 도달할 것 같아요" : "📈 이 추세라면 약 "+p.days+"일 후 목표 도달 예상")+suffix;
   }
   function buildInput(key, presetVal){
     var ex=EXES[key], wrap=$("detailInputWrap");
@@ -1253,6 +1285,22 @@
     return parseInt($("dIn1").value,10);
   }
 
+  // ---- RPE picker (run only) ----
+  function renderRpePicker(selected){
+    var box=$("rpePicker"), html="";
+    for(var r=RPE_MIN; r<=RPE_MAX; r++){
+      html += '<button type="button" class="rpe-btn'+(r===selected?' selected':'')+'" data-rpe="'+r+'">'+r+'</button>';
+    }
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll(".rpe-btn"), function(b){
+      b.addEventListener("click", function(){
+        var r=parseInt(b.getAttribute("data-rpe"),10);
+        currentRpe = (currentRpe===r) ? null : r; // tap again to clear
+        renderRpePicker(currentRpe);
+      });
+    });
+  }
+
   // ---- keep the input + delete button in sync with whatever date is picked,
   // so add/edit/delete for any date all live in this one screen ----
   function reloadInputForCurrentDate(){
@@ -1260,6 +1308,14 @@
     var val = valueForDate(currentDetailKey, dateStr);
     buildInput(currentDetailKey, val);
     $("detailDeleteBtn").style.display = val!=null ? "block" : "none";
+
+    var isRun = currentDetailKey==="run";
+    $("rpeGroup").style.display = isRun ? "block" : "none";
+    if(isRun){
+      var rec = records.filter(function(r){ return r.date===dateStr; })[0];
+      currentRpe = rec && typeof rec.rpe==="number" ? rec.rpe : null;
+      renderRpePicker(currentRpe);
+    }
   }
   function fillInputCard(presetDate){
     $("detailDate").value = presetDate || localStorage.getItem(LASTDATEKEY) || today();
@@ -1352,6 +1408,10 @@
     var rec = records.filter(function(r){ return r.date===dateStr; })[0];
     if(!rec){ rec={id:Date.now(), date:dateStr}; records.push(rec); }
     rec[key]=val; rec.age=age; rec.gender=gender;
+    if(key==="run"){
+      if(typeof currentRpe==="number") rec.rpe=currentRpe;
+      else delete rec.rpe;
+    }
     persist();
     localStorage.setItem(LASTDATEKEY, dateStr);
     reloadInputForCurrentDate(); // re-show the just-saved value + reveal the delete button
@@ -1412,6 +1472,7 @@
     var rec=records.filter(function(r){ return r.date===dateStr; })[0];
     if(!rec) return;
     delete rec[key];
+    if(key==="run") delete rec.rpe;
     var hasAny=["push","sit","run"].some(function(k){ return typeof rec[k]==="number"; });
     if(!hasAny){ records=records.filter(function(r){ return r!==rec; }); }
     persist();
