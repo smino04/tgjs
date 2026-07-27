@@ -1741,7 +1741,12 @@
   });
 
   function showOnboardingIfNeeded(){
-    if(records.length===0) $("onboarding").classList.add("open");
+    // records.length===0 alone isn't enough to call someone "brand new" —
+    // if 성별/연령 was already set, the records store specifically got wiped
+    // (storage eviction, etc.), not a first visit. Re-onboarding that person
+    // as if they'd never used the app would be confusing, so skip it.
+    var everConfigured = localStorage.getItem(GENDERKEY)!==null || localStorage.getItem(AGEKEY)!==null;
+    if(records.length===0 && !everConfigured) $("onboarding").classList.add("open");
   }
 
   // ---- tab switching: quick fade-in on the incoming screen ----
@@ -1777,6 +1782,17 @@
       location.reload();
     });
   });
+
+  // ---- ask the browser not to auto-evict this site's storage under
+  // pressure. localStorage is "best-effort" by default and some Android
+  // browsers/OEM skins clear it if the PWA hasn't been opened in a while
+  // or the device is low on space — this is the standard mitigation. ----
+  if(navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().then(function(granted){
+      if(window.gtag) gtag("event", "storage_persist", { granted: granted?1:0 });
+      if(window.umami) umami.track("storage_persist", { granted: granted?1:0 });
+    }).catch(function(){});
+  }
 
   // ---- init ----
   renderAll();
