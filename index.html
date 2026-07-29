@@ -277,10 +277,12 @@
   }
   .today-btn:active{opacity:.6}
   .detail-delete-btn{
-    width:100%; background:none; border:0; color:var(--danger); font-family:inherit;
-    font-size:13px; font-weight:600; padding:10px 0 2px; cursor:pointer;
+    flex:0 0 auto; width:52px; height:52px; display:grid; place-items:center;
+    background:rgba(255,59,48,.1); border:1px solid rgba(255,59,48,.25); color:var(--danger);
+    font-size:18px; border-radius:13px; cursor:pointer; font-family:inherit;
+    transition:background-color .15s, border-color .15s, transform .15s;
   }
-  .detail-delete-btn:active{opacity:.6}
+  .detail-delete-btn:active{transform:scale(.94); background:rgba(255,59,48,.18)}
   .btn{
     width:100%; font-family:inherit; font-size:16px; font-weight:700;
     border:0; background:var(--tint); color:#fff; padding:14px; border-radius:13px; cursor:pointer;
@@ -628,6 +630,7 @@
       <div class="input-row">
         <div class="field-input" id="detailInputWrap"></div>
         <button class="btn" id="detailSaveBtn">저장</button>
+        <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none" aria-label="이 날짜 기록 삭제">🗑️</button>
       </div>
       <div class="rpe-group" id="rpeGroup" style="display:none">
         <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span>
@@ -639,7 +642,6 @@
         </div>
         <div class="rpe-picker" id="rpePicker"></div>
       </div>
-      <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none">이 날짜 기록 삭제</button>
       <div class="detail-target" id="detailTarget"></div>
       <div class="detail-predict" id="detailPredict"></div>
     </div>
