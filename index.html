@@ -97,6 +97,8 @@
   .ex-card:nth-child(3){animation-delay:.15s}
   @keyframes cardIn{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
   .ex-card:active{transform:scale(.975); box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .ex-card.view-only{cursor:default}
+  .ex-card.view-only:active{transform:none; box-shadow:0 2px 10px rgba(0,0,0,.05)}
   .ex-card-top{display:flex; align-items:center; gap:18px; width:100%}
   .ex-icon{
     flex:0 0 auto; width:60px; height:60px; border-radius:17px;
@@ -1096,19 +1098,15 @@
     box.innerHTML = Object.keys(EXES).map(function(key){
       var ex=EXES[key], rec=latestValue(key), atGoal=false;
       if(rec) atGoal=(gradeOf(key,rec[key])===4);
-      return '<button class="ex-card'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
+      return '<div class="ex-card view-only'+(atGoal?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div></div>'
-          +'<div class="ex-chev">›</div>'
         +'</div>'
         +'<svg class="trend-svg" id="trendGraph-'+key+'" viewBox="0 0 300 170" preserveAspectRatio="none" style="display:none"></svg>'
-        +'<div class="graph-empty" id="trendEmpty-'+key+'" style="padding:16px"><div class="empty-sub">아직 기록이 없어요 — 탭해서 첫 기록을 남겨보세요</div></div>'
-      +'</button>';
+        +'<div class="graph-empty" id="trendEmpty-'+key+'" style="padding:16px"><div class="empty-sub">아직 기록이 없어요 — 홈 화면에서 입력해보세요</div></div>'
+      +'</div>';
     }).join("");
-    Array.prototype.forEach.call(box.querySelectorAll(".ex-card"), function(b){
-      b.addEventListener("click", function(){ openDetail(b.getAttribute("data-ex")); });
-    });
     Object.keys(EXES).forEach(function(key){
       drawGraph(key, $("trendGraph-"+key), $("trendEmpty-"+key));
     });
