@@ -112,11 +112,11 @@
   .trend-svg text{font-family:inherit; font-variant-numeric:tabular-nums}
 
   /* ---- 성장 추이: compact so all 3 exercises fit with little/no scrolling ---- */
-  .ex-card.view-only{padding:10px 14px 8px; margin-bottom:6px}
+  .ex-card.view-only{padding:8px 14px 6px; margin-bottom:4px}
   .ex-card.view-only .ex-card-top{gap:10px}
   .ex-card.view-only .ex-icon{width:36px; height:36px; border-radius:11px; font-size:19px}
   .ex-card.view-only .ex-name{font-size:14.5px}
-  .ex-card.view-only .trend-svg{margin-top:6px}
+  .ex-card.view-only .trend-svg{margin-top:4px}
   .ex-card.view-only .graph-empty{padding:8px !important}
   .ex-card.view-only .graph-empty .empty-sub{font-size:11.5px}
 
@@ -1114,7 +1114,7 @@
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div></div>'
         +'</div>'
-        +'<svg class="trend-svg" id="trendGraph-'+key+'" viewBox="0 0 300 95" preserveAspectRatio="none" style="display:none"></svg>'
+        +'<svg class="trend-svg" id="trendGraph-'+key+'" viewBox="0 0 300 100" preserveAspectRatio="none" style="display:none"></svg>'
         +'<div class="graph-empty" id="trendEmpty-'+key+'" style="padding:16px"><div class="empty-sub">아직 기록이 없어요 — 홈 화면에서 입력해보세요</div></div>'
       +'</div>';
     }).join("");
@@ -1641,10 +1641,10 @@
     var scale=niceScale(rawMin, rawMax, compact?3:5);
     var min=scale.min, max=scale.max;
 
-    // ---- compact mode: shorter viewBox (matches the trend-svg's 300x95) and
+    // ---- compact mode: shorter viewBox (matches the trend-svg's 300x100) and
     // smaller type, so the 성장 추이 cards can all fit with little/no scroll ----
-    var W=300, H=compact?95:170;
-    var padL=compact?26:32, padR=compact?10:34, padT=compact?8:20, padB=compact?16:22;
+    var W=300, H=compact?100:170;
+    var padL=compact?22:32, padR=compact?10:34, padT=compact?14:20, padB=compact?16:22;
     var tickFont=compact?7:8.5, valFont=compact?8:10, dateFont=compact?7:8.5, dotR=compact?2.4:3.6;
     function xAt(i){ return pts.length===1 ? padL+(W-padL-padR)/2 : padL + (i/(pts.length-1))*(W-padL-padR); }
     function yAt(v){
@@ -1685,10 +1685,8 @@
       var x=xAt(i).toFixed(1), y=yAt(values[i]).toFixed(1);
       var color = ok?"var(--gold)":"var(--tint)";
       dots += '<circle cx="'+x+'" cy="'+y+'" r="'+dotR+'" fill="'+color+'" stroke="var(--surface)" stroke-width="1.5"/>';
-      if(!compact || i===pts.length-1){
-        valueLabels += '<text x="'+x+'" y="'+(parseFloat(y)-(compact?6:8))+'" text-anchor="middle" font-size="'+valFont+'" font-weight="700" fill="'+color+'">'+(ex.isTime?fmtRun(values[i]):values[i])+'</text>';
-      }
-      if(!compact && (i%step===0 || i===pts.length-1)){
+      valueLabels += '<text x="'+x+'" y="'+(parseFloat(y)-(compact?6:8))+'" text-anchor="middle" font-size="'+valFont+'" font-weight="700" fill="'+color+'">'+(ex.isTime?fmtRun(values[i]):values[i])+'</text>';
+      if(i%step===0 || i===pts.length-1){
         dateLabels += '<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" font-size="'+dateFont+'" fill="var(--ink-faint)">'+shortDate(p.date)+'</text>';
       }
     });
