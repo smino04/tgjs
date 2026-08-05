@@ -978,6 +978,27 @@
   var currentRpe = null; // selected RPE (6~20) for the run entry currently being edited
 
   var $=function(id){return document.getElementById(id)};
+
+  // ---- overlay/back-button stack: makes Android's hardware/gesture back
+  // button close whichever sub-page (exercise detail, 설정 sub-pages, the
+  // 홈 화면에 추가 sheet, …) is currently open instead of exiting the app.
+  // Opening a sub-page pushes a history entry; both the on-screen "‹ 뒤로"
+  // buttons and the hardware back button are routed through history.back(),
+  // so a single popstate handler is the only place that actually closes one.
+  var overlayStack = [];
+  function openOverlay(id){
+    $(id).classList.add("open");
+    overlayStack.push(id);
+    history.pushState({teukupOverlay:id}, "");
+  }
+  function closeOverlay(){
+    if(!overlayStack.length) return;
+    history.back();
+  }
+  window.addEventListener("popstate", function(){
+    var id = overlayStack.pop();
+    if(id) $(id).classList.remove("open");
+  });
   function load(){ try{return JSON.parse(localStorage.getItem(STORE))||[]}catch(e){return[]} }
   function persist(){ localStorage.setItem(STORE, JSON.stringify(records)) }
   function fmtRun(s){ if(s==null||isNaN(s))return "—"; var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
@@ -1138,7 +1159,7 @@
     updateScheduleRowDesc();
   });
   $("homeDdayCard").addEventListener("click", function(){
-    if(!localStorage.getItem(NEXTTESTKEY)) $("scheduleDetail").classList.add("open");
+    if(!localStorage.getItem(NEXTTESTKEY)) openOverlay("scheduleDetail");
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
   updateScheduleRowDesc();
@@ -1527,10 +1548,10 @@
     fillInputCard(presetDate);
     renderStats(key);
     drawGraph(key);
-    $("detail").classList.add("open");
+    openOverlay("detail");
   }
   function closeDetail(){
-    $("detail").classList.remove("open");
+    closeOverlay();
   }
   $("detailBack").addEventListener("click", closeDetail);
 
@@ -1834,8 +1855,8 @@
   }
 
   // ---- settings: 기준 sub-page ----
-  $("stdRow").addEventListener("click", function(){ $("stdDetail").classList.add("open"); });
-  $("stdBack").addEventListener("click", function(){ $("stdDetail").classList.remove("open"); });
+  $("stdRow").addEventListener("click", function(){ openOverlay("stdDetail"); });
+  $("stdBack").addEventListener("click", function(){ closeOverlay(); });
 
   // ---- settings: 기준표 보기 sub-page ----
   var stdTableGender=gender, stdTableEx="push";
@@ -1863,9 +1884,9 @@
       b.setAttribute("aria-pressed", b.getAttribute("data-ex")===stdTableEx?"true":"false");
     });
     renderStdTable();
-    $("stdTableDetail").classList.add("open");
+    openOverlay("stdTableDetail");
   });
-  $("stdTableBack").addEventListener("click", function(){ $("stdTableDetail").classList.remove("open"); });
+  $("stdTableBack").addEventListener("click", function(){ closeOverlay(); });
   Array.prototype.forEach.call($("stdTableGenderSeg").querySelectorAll("button"), function(b){
     b.addEventListener("click", function(){
       stdTableGender=b.getAttribute("data-gender");
@@ -1886,16 +1907,16 @@
   });
 
   // ---- settings: 일정 sub-page ----
-  $("scheduleRow").addEventListener("click", function(){ $("scheduleDetail").classList.add("open"); });
-  $("scheduleBack").addEventListener("click", function(){ $("scheduleDetail").classList.remove("open"); });
+  $("scheduleRow").addEventListener("click", function(){ openOverlay("scheduleDetail"); });
+  $("scheduleBack").addEventListener("click", function(){ closeOverlay(); });
 
   // ---- settings: 화면 모드 sub-page ----
-  $("themeRow").addEventListener("click", function(){ $("themeDetail").classList.add("open"); });
-  $("themeBack").addEventListener("click", function(){ $("themeDetail").classList.remove("open"); });
+  $("themeRow").addEventListener("click", function(){ openOverlay("themeDetail"); });
+  $("themeBack").addEventListener("click", function(){ closeOverlay(); });
 
   // ---- settings: 목표 등급 sub-page ----
-  $("goalRow").addEventListener("click", function(){ $("goalDetail").classList.add("open"); });
-  $("goalBack").addEventListener("click", function(){ $("goalDetail").classList.remove("open"); });
+  $("goalRow").addEventListener("click", function(){ openOverlay("goalDetail"); });
+  $("goalBack").addEventListener("click", function(){ closeOverlay(); });
   function renderGoalOptions(){
     var box=$("goalOptions");
     box.innerHTML = [4,3,2,1].map(function(g){
@@ -1965,10 +1986,10 @@
   }
   function openA2HS(){
     $("a2hsBody").innerHTML=a2hsContent();
-    $("a2hsBackdrop").classList.add("open");
+    openOverlay("a2hsBackdrop");
   }
   function closeA2HS(){
-    $("a2hsBackdrop").classList.remove("open");
+    closeOverlay();
   }
   $("a2hsRow").addEventListener("click", openA2HS);
   $("feedbackRow").addEventListener("click", function(){
