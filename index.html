@@ -655,6 +655,7 @@
       <div class="stat-card">
         <div class="stat-label">현재 등급</div>
         <div class="stat-value" id="statGrade">—</div>
+        <div class="stat-sub" id="statGradeSub"></div>
       </div>
     </div>
 
@@ -1682,17 +1683,19 @@
   // ---- stats ----
   function renderStats(key){
     var ex=EXES[key], rec=latestValue(key);
-    var latestEl=$("statLatest"), gradeEl=$("statGrade");
+    var latestEl=$("statLatest"), gradeEl=$("statGrade"), gradeSubEl=$("statGradeSub");
     if(!rec){
       latestEl.textContent="—"; latestEl.className="stat-value muted";
       gradeEl.textContent="—"; gradeEl.className="stat-value muted";
+      gradeSubEl.textContent="";
       return;
     }
-    var val=rec[key], gr=gradeOf(key,val);
+    var val=rec[key], gr=gradeOf(key,val), goal=goalCut(key);
     latestEl.textContent = ex.isTime ? fmtRun(val) : val+ex.unit;
     latestEl.className="stat-value";
     gradeEl.textContent=gradeLabel(gr);
     gradeEl.className="stat-value"+(gr===4?" gold":(gr===0?" muted":""));
+    gradeSubEl.textContent = ex.isTime ? fmtRun(val)+"/"+fmtRun(goal) : val+"/"+goal;
   }
 
   // ---- delete a single exercise's value on a given date (used from the calendar) ----
