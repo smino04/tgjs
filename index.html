@@ -1731,7 +1731,14 @@
     latestEl.className="stat-value";
     gradeEl.textContent=gradeLabel(gr);
     gradeEl.className="stat-value"+(gr===4?" gold":(gr===0?" muted":""));
-    gradeSubEl.textContent = ex.isTime ? fmtRun(val)+"/"+fmtRun(goal) : val+"/"+goal;
+    var ratioText = ex.isTime ? fmtRun(val)+"/"+fmtRun(goal) : val+"/"+goal;
+    if(gr<4){
+      // 목표(대개 특급)까지는 멀어 보여도, 바로 다음 등급까지는 가까울 수 있으니 같이 보여준다
+      var nextCut=cuts(key)[3-gr];
+      var nextGap = ex.isTime ? val-nextCut : nextCut-val;
+      ratioText += " · 다음 등급까지 "+(ex.isTime ? fmtRun(nextGap) : nextGap+ex.unit);
+    }
+    gradeSubEl.textContent = ratioText;
   }
 
   // ---- delete a single exercise's value on a given date (used from the calendar) ----
