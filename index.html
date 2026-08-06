@@ -1209,13 +1209,13 @@
       var done = val!=null;
       if(done) doneCount++;
       var gr = done ? gradeOf(key,val) : null;
-      var gap = done ? gapText(key, val) : null;
+      var gap = done ? nextGradeGapText(key, val) : null;
       return '<button class="ex-card today-card'+(done?' done':'')+(gr===4?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div>'
           +(done
-            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 목표까지 '+gap:'')+'</div>'
+            ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 다음 등급까지 '+gap:'')+'</div>'
             : '<div class="row-desc" style="color:var(--tint); font-weight:600">탭해서 오늘 기록 입력</div>')
           +'</div>'
           +(done ? gradePill(gr) : '<div class="ex-chev">›</div>')
@@ -1338,13 +1338,23 @@
     if(val>=goal) return null;
     return (goal-val)+ex.unit+" 남음";
   }
+  // gap to the very next grade tier up (not the final goal) — most people start
+  // near 불합격, so "목표까지"(대개 특급) can look discouragingly far off
+  function nextGradeGapText(key, val){
+    var gr=gradeOf(key,val);
+    if(gr>=4) return null;
+    var ex=EXES[key], nextCut=cuts(key)[3-gr];
+    if(ex.isTime) return fmtRun(val-nextCut)+" 단축 필요";
+    return (nextCut-val)+ex.unit+" 남음";
+  }
   function targetText(key){
     var v=goalCut(key), ex=EXES[key], label=GRADE_LABELS[goalGrade];
     var base = ex.isTime ? label+" 기준 "+fmtRun(v)+" 이내" : label+" 기준 "+v+"개";
     var rec=latestValue(key);
     if(!rec || typeof rec[key]!=="number") return base;
-    var gap=gapText(key, rec[key]);
-    return gap ? base+" · 목표까지 "+gap : base+" · 이미 목표 달성했어요 🎉";
+    if(!gapText(key, rec[key])) return base+" · 이미 목표 달성했어요 🎉";
+    var nextGap=nextGradeGapText(key, rec[key]);
+    return nextGap ? base+" · 다음 등급까지 "+nextGap : base+" · 이미 목표 달성했어요 🎉";
   }
 
   // ---- trend prediction: asymptotic exponential approach to the 특급 cutoff ----
@@ -1732,14 +1742,9 @@
     latestEl.className="stat-value";
     gradeEl.textContent=gradeLabel(gr);
     gradeEl.className="stat-value"+(gr===4?" gold":(gr===0?" muted":""));
-    var ratioText = ex.isTime ? fmtRun(val)+"/"+fmtRun(goal) : val+"/"+goal;
-    if(gr<4){
-      // 목표(대개 특급)까지는 멀어 보여도, 바로 다음 등급까지는 가까울 수 있으니 같이 보여준다
-      var nextCut=cuts(key)[3-gr];
-      var nextGap = ex.isTime ? val-nextCut : nextCut-val;
-      ratioText += " · 다음 등급까지 "+(ex.isTime ? fmtRun(nextGap) : nextGap+ex.unit);
-    }
-    gradeSubEl.textContent = ratioText;
+    // 다음 등급까지 남은 양은 바로 아래 targetText()에서 문장으로 보여주니
+    // 여기서는 중복 없이 현재값/목표값 비율만 짧게 보여준다
+    gradeSubEl.textContent = ex.isTime ? fmtRun(val)+"/"+fmtRun(goal) : val+"/"+goal;
   }
 
   // ---- delete a single exercise's value on a given date (used from the calendar) ----
