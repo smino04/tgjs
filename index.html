@@ -1079,10 +1079,10 @@
     var gradeEl=$("homeGrade"), gradeSub=$("homeGradeSub"), gradeRows=$("homeGradeRows");
     var ddayEl=$("homeDday"), ddaySub=$("homeDdaySub");
 
-    var keys=Object.keys(EXES), have=[], grades=[];
+    var keys=Object.keys(EXES), have=[], grades=[], vals=[];
     keys.forEach(function(k){
       var rec=latestValue(k);
-      if(rec){ have.push(k); grades.push(gradeOf(k, rec[k])); }
+      if(rec){ have.push(k); grades.push(gradeOf(k, rec[k])); vals.push(rec[k]); }
     });
     if(have.length===0){
       gradeEl.style.display=""; gradeSub.style.display=""; gradeRows.style.display="none";
@@ -1104,7 +1104,8 @@
         // 종목별 등급을 그 자리에 바로 보여준다
         gradeEl.style.display="none"; gradeSub.style.display="none"; gradeRows.style.display="flex";
         gradeRows.innerHTML = keys.map(function(k,i){
-          return '<div class="home-grade-row"><span class="home-grade-name">'+EXES[k].short+'</span>'+gradePill(grades[i])+'</div>';
+          var ex=EXES[k], valText = ex.isTime ? fmtRun(vals[i]) : vals[i]+ex.unit;
+          return '<div class="home-grade-row"><span class="home-grade-name">'+ex.short+' '+valText+'</span>'+gradePill(grades[i])+'</div>';
         }).join("");
       }
     }
