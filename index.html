@@ -1091,7 +1091,8 @@
       var worst=Math.min.apply(null, grades); // scale is 0(불합격)..4(특급), lower = worse
       gradeEl.textContent = worst===4 ? "특급전사!" : gradeLabel(worst);
       gradeEl.className="stat-value"+(worst===4?" gold":(worst===0?" muted":""));
-      gradeSub.textContent = worst===4 ? "3종목 모두 특급 달성" : "가장 낮은 종목 기준";
+      gradeSub.textContent = worst===4 ? "3종목 모두 특급 달성"
+        : keys.map(function(k,i){ return EXES[k].short+" "+gradeLabel(grades[i]); }).join(" · ");
     }
 
     var nextDate=localStorage.getItem(NEXTTESTKEY);
