@@ -381,14 +381,20 @@
   .discharge-banner{
     /* fixed dark-olive gradient (not the --tint var) so contrast with the
        white text stays good in both light and dark mode */
-    display:flex; align-items:baseline; justify-content:center; gap:8px;
+    display:flex; align-items:baseline; justify-content:center; gap:8px; cursor:pointer;
     background:linear-gradient(135deg, #4A5A2A 0%, #262F14 100%); color:#fff;
     padding:14px; border-radius:15px; margin-bottom:10px;
     animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
   }
+  .discharge-banner:active{opacity:.85}
   .discharge-banner .discharge-label{font-size:13px; font-weight:600; opacity:.85}
   .discharge-banner .discharge-dday{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
   .discharge-banner.imminent{animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards, riskPulse 1.8s ease-in-out infinite}
+  .discharge-banner.cta{
+    background:var(--tint-bg); color:var(--tint); justify-content:space-between;
+  }
+  .discharge-banner.cta .discharge-label{font-size:14px; font-weight:700; opacity:1}
+  .discharge-banner.cta .discharge-cta-chev{font-size:18px; opacity:.7}
 
   /* ---- save toast + grade celebration ---- */
   .toast{
@@ -601,6 +607,14 @@
         </div>
         <span class="ex-chev">›</span>
       </div>
+      <div class="row row-icon" id="dischargeRow" style="cursor:pointer">
+        <div class="row-icon-badge" style="background:var(--tint-bg)">🎖️</div>
+        <div class="row-text">
+          <div class="row-label">전역일</div>
+          <div class="row-desc" id="dischargeRowDesc">설정 안 됨</div>
+        </div>
+        <span class="ex-chev">›</span>
+      </div>
       <div class="row row-icon" id="themeRow" style="cursor:pointer">
         <div class="row-icon-badge" style="background:var(--gold-bg)">🎨</div>
         <div class="row-text">
@@ -803,7 +817,17 @@
         <div class="row-label">측정일 지우기</div>
       </div>
     </div>
+  </div>
+</div>
 
+<!-- ============ 전역일 설정 (슬라이드 화면) ============ -->
+<div class="detail" id="dischargeDetail">
+  <div class="detail-nav">
+    <button class="detail-back" id="dischargeBack">‹ 설정</button>
+    <span class="detail-title">전역일</span>
+    <div class="detail-spacer"></div>
+  </div>
+  <div class="detail-body">
     <div class="group-label">전역일</div>
     <div class="group">
       <div class="row">
@@ -1208,27 +1232,43 @@
   updateScheduleRowDesc();
 
   // ---- 전역일: a big D-day banner up top, since discharge date is usually
-  // THE motivating countdown for a soldier using this app ----
+  // THE motivating countdown for a soldier using this app. Shows a CTA to
+  // set it when unset, or the countdown once it's set — never both. ----
+  function updateDischargeRowDesc(){
+    var v=localStorage.getItem(DISCHARGEKEY);
+    $("dischargeRowDesc").textContent = v ? shortDate(v)+" 예정" : "설정 안 됨";
+  }
   function renderDischargeBanner(){
     var banner=$("dischargeBanner"), v=localStorage.getItem(DISCHARGEKEY);
-    if(!v){ banner.style.display="none"; return; }
+    if(!v){
+      banner.className="discharge-banner cta";
+      banner.innerHTML='<span class="discharge-label">🎖️ 전역일을 설정해보세요</span><span class="discharge-cta-chev">›</span>';
+      banner.style.display="flex";
+      return;
+    }
     var diffDays=Math.round((new Date(v+"T00:00:00") - new Date(today()+"T00:00:00")) / 86400000);
     var ddayText = diffDays>0 ? "D-"+diffDays : diffDays===0 ? "D-DAY" : "D+"+(-diffDays);
     banner.innerHTML = '<span class="discharge-label">🎖️ 전역까지</span><span class="discharge-dday">'+ddayText+'</span>';
     banner.className = "discharge-banner"+(diffDays>=0 && diffDays<=7 ? " imminent" : "");
     banner.style.display="flex";
   }
+  $("dischargeBanner").addEventListener("click", function(){ openOverlay("dischargeDetail"); });
+  $("dischargeRow").addEventListener("click", function(){ openOverlay("dischargeDetail"); });
+  $("dischargeBack").addEventListener("click", function(){ closeOverlay(); });
   $("dischargeDate").addEventListener("change", function(){
     if(this.value) localStorage.setItem(DISCHARGEKEY, this.value);
     else localStorage.removeItem(DISCHARGEKEY);
     renderDischargeBanner();
+    updateDischargeRowDesc();
   });
   $("clearDischargeBtn").addEventListener("click", function(){
     localStorage.removeItem(DISCHARGEKEY);
     $("dischargeDate").value="";
     renderDischargeBanner();
+    updateDischargeRowDesc();
   });
   if(localStorage.getItem(DISCHARGEKEY)) $("dischargeDate").value=localStorage.getItem(DISCHARGEKEY);
+  updateDischargeRowDesc();
   renderDischargeBanner();
 
   function renderTrendCards(){
