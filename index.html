@@ -53,11 +53,8 @@
     color-scheme:light;
   }
   :root[data-theme="dark"]{
-    /* a warm, olive-tinted charcoal instead of flat OLED black — matches the
-       app's military-green brand tint and the PWA splash screen color, and
-       reads softer over long sessions than pure #000 */
-    --bg:#15180F; --surface:#211F17; --line:#3A3729;
-    --ink:#F5F4EE; --ink-dim:#A6A392; --ink-faint:#75725F;
+    --bg:#000000; --surface:#1C1C1E; --line:#333336;
+    --ink:#FFFFFF; --ink-dim:#98989D; --ink-faint:#68686D;
     --tint:#9CB56C; --tint-bg:rgba(156,181,108,.16);
     --gold:#E8C05A; --gold-bg:rgba(232,192,90,.14);
     --green:#30D158; --danger:#FF453A;
@@ -1069,7 +1066,7 @@
     // keep the browser/PWA status-bar color in sync with the active theme,
     // including the in-app override (media-query metas can't see that)
     var meta=$("themeColorMeta");
-    if(meta) meta.setAttribute("content", resolved==="dark" ? "#15180F" : "#F2F2F7");
+    if(meta) meta.setAttribute("content", resolved==="dark" ? "#000000" : "#F2F2F7");
     Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
       b.setAttribute("aria-pressed", b.getAttribute("data-theme-pref")===pref ? "true" : "false");
     });
