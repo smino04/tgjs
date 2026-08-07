@@ -381,6 +381,18 @@
   .streak-banner.broken{background:var(--line); color:var(--ink-dim)}
   @keyframes riskPulse{0%,100%{opacity:1}50%{opacity:.72}}
 
+  .discharge-banner{
+    /* fixed dark-olive gradient (not the --tint var) so contrast with the
+       white text stays good in both light and dark mode */
+    display:flex; align-items:baseline; justify-content:center; gap:8px;
+    background:linear-gradient(135deg, #4A5A2A 0%, #262F14 100%); color:#fff;
+    padding:14px; border-radius:15px; margin-bottom:10px;
+    animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards;
+  }
+  .discharge-banner .discharge-label{font-size:13px; font-weight:600; opacity:.85}
+  .discharge-banner .discharge-dday{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+  .discharge-banner.imminent{animation:cardIn .4s cubic-bezier(.22,1,.36,1) backwards, riskPulse 1.8s ease-in-out infinite}
+
   /* ---- save toast + grade celebration ---- */
   .toast{
     position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,10px) + 82px); z-index:950;
@@ -521,6 +533,7 @@
   <section class="screen active" id="screen-home">
     <div class="page-header"><h1>홈</h1></div>
 
+    <div class="discharge-banner" id="dischargeBanner" style="display:none"></div>
     <div class="streak-banner" id="streakBanner" style="display:none"></div>
     <div class="stat-row">
       <div class="stat-card">
@@ -793,6 +806,20 @@
         <div class="row-label">측정일 지우기</div>
       </div>
     </div>
+
+    <div class="group-label">전역일</div>
+    <div class="group">
+      <div class="row">
+        <div>
+          <div class="row-label">전역일</div>
+          <div class="row-desc">홈 화면에 D-day로 표시됩니다</div>
+        </div>
+        <input class="date-input" id="dischargeDate" type="date" style="width:auto; margin:0" aria-label="전역일">
+      </div>
+      <div class="row danger" id="clearDischargeBtn" style="cursor:pointer">
+        <div class="row-label">전역일 지우기</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -903,7 +930,7 @@
 <script>
 (function(){
   "use strict";
-  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1", TEUKUPACHIEVEDKEY="teukup_achieved_v1", GOALKEY="teukup_goal_v1", BESTSTREAKKEY="teukup_beststreak_v1";
+  var STORE="teukup_records_v1", AGEKEY="teukup_age_v1", GENDERKEY="teukup_gender_v1", THEMEKEY="teukup_theme_v1", LASTDATEKEY="teukup_lastdate_v1", NEXTTESTKEY="teukup_nexttest_v1", TEUKUPACHIEVEDKEY="teukup_achieved_v1", GOALKEY="teukup_goal_v1", BESTSTREAKKEY="teukup_beststreak_v1", DISCHARGEKEY="teukup_discharge_v1";
 
   // 국군 체력검정 기준표 (제389조 관련) — 성별 × 연령 13구간 × 종목별 [특급,1급,2급,3급] 컷.
   // 반복 종목(팔굽/윗몸)은 각 컷이 "이상", 3km 달리기는 각 컷이 초 단위 "이하".
@@ -1182,6 +1209,30 @@
   });
   if(localStorage.getItem(NEXTTESTKEY)) $("nextTestDate").value=localStorage.getItem(NEXTTESTKEY);
   updateScheduleRowDesc();
+
+  // ---- 전역일: a big D-day banner up top, since discharge date is usually
+  // THE motivating countdown for a soldier using this app ----
+  function renderDischargeBanner(){
+    var banner=$("dischargeBanner"), v=localStorage.getItem(DISCHARGEKEY);
+    if(!v){ banner.style.display="none"; return; }
+    var diffDays=Math.round((new Date(v+"T00:00:00") - new Date(today()+"T00:00:00")) / 86400000);
+    var ddayText = diffDays>0 ? "D-"+diffDays : diffDays===0 ? "D-DAY" : "D+"+(-diffDays);
+    banner.innerHTML = '<span class="discharge-label">🎖️ 전역까지</span><span class="discharge-dday">'+ddayText+'</span>';
+    banner.className = "discharge-banner"+(diffDays>=0 && diffDays<=7 ? " imminent" : "");
+    banner.style.display="flex";
+  }
+  $("dischargeDate").addEventListener("change", function(){
+    if(this.value) localStorage.setItem(DISCHARGEKEY, this.value);
+    else localStorage.removeItem(DISCHARGEKEY);
+    renderDischargeBanner();
+  });
+  $("clearDischargeBtn").addEventListener("click", function(){
+    localStorage.removeItem(DISCHARGEKEY);
+    $("dischargeDate").value="";
+    renderDischargeBanner();
+  });
+  if(localStorage.getItem(DISCHARGEKEY)) $("dischargeDate").value=localStorage.getItem(DISCHARGEKEY);
+  renderDischargeBanner();
 
   function renderTrendCards(){
     var box=$("exCards");
