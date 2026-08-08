@@ -304,6 +304,35 @@
   .field-input .unit{font-size:13px; color:var(--ink-dim)}
   .field-input .colon{font-size:18px; color:var(--ink-dim)}
   .input-row .btn{width:auto; flex:0 0 auto; padding:11px 20px; font-size:15px}
+
+  /* ---- hero stepper: the big tap-to-adjust number that replaces the old
+     plain form-row input, so logging today's number feels less like filling
+     out a form and more like a quick, satisfying tap ---- */
+  .hero-row{display:flex; align-items:center; justify-content:center; gap:14px}
+  .hero-step-btn{
+    flex:0 0 auto; width:48px; height:48px; border-radius:50%;
+    background:var(--tint-bg); color:var(--tint); border:0;
+    font-size:24px; font-weight:700; line-height:1; cursor:pointer; font-family:inherit;
+    transition:background-color .15s, transform .15s;
+  }
+  .hero-step-btn:active{transform:scale(.9); background:var(--tint); color:#fff}
+  .hero-field{flex:0 1 auto; justify-content:center; gap:8px}
+  .hero-field input{
+    max-width:150px; font-size:44px; padding:6px 4px; border-radius:14px;
+    background:none; border:1px solid transparent;
+  }
+  .hero-field input:focus-visible{background:var(--bg); border-color:var(--line)}
+  .hero-field .unit{font-size:16px}
+  .hero-field .colon{font-size:36px}
+  .hero-grade-row{display:flex; align-items:center; justify-content:center; gap:6px; min-height:24px; margin:2px 0 14px}
+  .hero-grade-hint{font-size:12px; color:var(--ink-faint)}
+  .more-toggle-btn{
+    display:block; width:100%; text-align:center; margin-top:10px;
+    background:none; border:0; color:var(--ink-faint); font-size:12.5px; font-weight:600;
+    font-family:inherit; cursor:pointer; padding:6px 0 0;
+  }
+  .more-toggle-btn:active{opacity:.6}
+  .more-panel{margin-top:6px; padding-top:2px; animation:cardIn .3s cubic-bezier(.22,1,.36,1) backwards}
   .date-label{flex:0 0 auto; font-size:13px; color:var(--ink-dim); font-weight:600; white-space:nowrap}
   .date-input{
     flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);
@@ -317,12 +346,12 @@
   }
   .today-btn:active{opacity:.6}
   .detail-delete-btn{
-    flex:0 0 auto; width:52px; height:52px; display:grid; place-items:center;
+    display:block; width:100%; text-align:center; margin-top:12px;
     background:rgba(255,59,48,.1); border:1px solid rgba(255,59,48,.25); color:var(--danger);
-    font-size:18px; border-radius:13px; cursor:pointer; font-family:inherit;
-    transition:background-color .15s, border-color .15s, transform .15s;
+    font-size:13.5px; font-weight:600; padding:11px; border-radius:12px; cursor:pointer; font-family:inherit;
+    transition:background-color .15s, transform .15s;
   }
-  .detail-delete-btn:active{transform:scale(.94); background:rgba(255,59,48,.18)}
+  .detail-delete-btn:active{transform:scale(.98); background:rgba(255,59,48,.18)}
   .btn{
     width:100%; font-family:inherit; font-size:16px; font-weight:700;
     border:0; background:var(--tint); color:#fff; padding:14px; border-radius:13px; cursor:pointer;
@@ -691,38 +720,45 @@
     </div>
 
     <div class="input-card" id="inputCard">
-      <div class="input-row">
-        <span class="date-label">📅 캘린더</span>
-        <input class="date-input" id="detailDate" type="date" aria-label="측정일">
-        <button type="button" class="today-btn" id="todayBtn">오늘</button>
+      <div class="hero-row">
+        <button type="button" class="hero-step-btn" id="heroStepDown" aria-label="줄이기">−</button>
+        <div class="field-input hero-field" id="detailInputWrap"></div>
+        <button type="button" class="hero-step-btn" id="heroStepUp" aria-label="늘리기">+</button>
       </div>
-      <div class="input-row">
-        <div class="field-input" id="detailInputWrap"></div>
-        <button class="btn" id="detailSaveBtn">저장</button>
-        <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none" aria-label="이 날짜 기록 삭제">🗑️</button>
-      </div>
-      <div class="split-toggle-row" id="splitToggleRow" style="display:none">
-        <button type="button" class="split-toggle-btn" id="splitToggleBtn">🔢 세트 나눠서 기록</button>
-      </div>
-      <div class="split-group" id="splitGroup" style="display:none">
-        <div class="split-rows" id="splitRows"></div>
-        <div class="split-actions">
-          <button type="button" class="split-add-btn" id="splitAddBtn">+ 세트 추가</button>
-          <span class="split-total" id="splitTotal">합계 0</span>
-        </div>
-      </div>
-      <div class="rpe-group" id="rpeGroup" style="display:none">
-        <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span>
-          <button type="button" class="rpe-help-btn" id="rpeHelpBtn" aria-label="RPE 설명 보기">?</button>
-        </div>
-        <div class="rpe-desc" id="rpeDesc" style="display:none">
-          숫자가 클수록 힘들게 뛴 거예요 — 다음 예측(추세)이 쉬운 날에 흔들리지 않게 도와줘요.<br>
-          <b>20</b> 전력 질주 · <b>15</b> 힘들지만 끝까지 유지 가능 · <b>10</b> 가볍게 조깅
-        </div>
-        <div class="rpe-picker" id="rpePicker"></div>
-      </div>
+      <div class="hero-grade-row" id="heroGradeRow"></div>
+      <button class="btn" id="detailSaveBtn">저장</button>
       <div class="detail-target" id="detailTarget"></div>
       <div class="detail-predict" id="detailPredict"></div>
+
+      <button type="button" class="more-toggle-btn" id="moreToggleBtn">더보기 ⌄</button>
+      <div class="more-panel" id="morePanel" style="display:none">
+        <div class="input-row">
+          <span class="date-label">📅 캘린더</span>
+          <input class="date-input" id="detailDate" type="date" aria-label="측정일">
+          <button type="button" class="today-btn" id="todayBtn">오늘</button>
+        </div>
+        <div class="split-toggle-row" id="splitToggleRow" style="display:none">
+          <button type="button" class="split-toggle-btn" id="splitToggleBtn">🔢 세트 나눠서 기록</button>
+        </div>
+        <div class="split-group" id="splitGroup" style="display:none">
+          <div class="split-rows" id="splitRows"></div>
+          <div class="split-actions">
+            <button type="button" class="split-add-btn" id="splitAddBtn">+ 세트 추가</button>
+            <span class="split-total" id="splitTotal">합계 0</span>
+          </div>
+        </div>
+        <div class="rpe-group" id="rpeGroup" style="display:none">
+          <div class="rpe-label">체감 강도(RPE) <span class="rpe-hint">선택 사항 · 안 고르면 최대 강도로 간주</span>
+            <button type="button" class="rpe-help-btn" id="rpeHelpBtn" aria-label="RPE 설명 보기">?</button>
+          </div>
+          <div class="rpe-desc" id="rpeDesc" style="display:none">
+            숫자가 클수록 힘들게 뛴 거예요 — 다음 예측(추세)이 쉬운 날에 흔들리지 않게 도와줘요.<br>
+            <b>20</b> 전력 질주 · <b>15</b> 힘들지만 끝까지 유지 가능 · <b>10</b> 가볍게 조깅
+          </div>
+          <div class="rpe-picker" id="rpePicker"></div>
+        </div>
+        <button type="button" class="detail-delete-btn" id="detailDeleteBtn" style="display:none" aria-label="이 날짜 기록 삭제">🗑️ 이 날짜 기록 삭제</button>
+      </div>
     </div>
 
     <div class="graph-card">
@@ -1521,6 +1557,48 @@
     return parseInt($("dIn1").value,10);
   }
 
+  // ---- hero stepper: tap +/- to nudge the value (±1 for reps, ±5s for the
+  // run), with the grade pill updating live so entering a number feels less
+  // like filling out a form and more like watching a number climb ----
+  function updateHeroGrade(){
+    var key=currentDetailKey, row=$("heroGradeRow");
+    if(!key) return;
+    var val=readInputValue(key);
+    if(isNaN(val) || val<=0){
+      row.innerHTML='<span class="hero-grade-hint">숫자를 입력하면 바로 등급이 떠요</span>';
+      return;
+    }
+    var gr=gradeOf(key,val);
+    var extra = gr<4 ? (" · 다음 등급까지 "+nextGradeGapText(key,val)) : " · 최고 등급이에요!";
+    row.innerHTML = gradePill(gr)+'<span class="hero-grade-hint">'+extra+'</span>';
+  }
+  function heroStep(sign){
+    if($("dIn1").readOnly) return; // split-set mode: edit via the set rows instead
+    var ex=EXES[currentDetailKey];
+    if(ex.isTime){
+      var mm=parseInt($("dIn1").value,10)||0, ss=parseInt($("dIn2").value,10)||0;
+      var total=Math.max(0, mm*60+ss + sign*5);
+      $("dIn1").value=Math.floor(total/60);
+      $("dIn2").value=total%60;
+    }else{
+      var v=Math.max(0, (parseInt($("dIn1").value,10)||0) + sign);
+      $("dIn1").value=v;
+    }
+    updateHeroGrade();
+  }
+  $("heroStepDown").addEventListener("click", function(){ heroStep(-1); });
+  $("heroStepUp").addEventListener("click", function(){ heroStep(1); });
+
+  // ---- 더보기: date picker / split-set / RPE / delete all tucked away by
+  // default so the everyday "log today's number" flow stays uncluttered ----
+  function setMorePanelOpen(open){
+    $("morePanel").style.display = open ? "block" : "none";
+    $("moreToggleBtn").textContent = open ? "접기 ⌃" : "더보기 ⌄";
+  }
+  $("moreToggleBtn").addEventListener("click", function(){
+    setMorePanelOpen($("morePanel").style.display==="none");
+  });
+
   // ---- split-set entry: log push-up/sit-up reps done as several separate sets
   // that get summed into the usual single record value (팔굽혀펴기/윗몸일으키기 only) ----
   function getSplitSetValues(){
@@ -1552,6 +1630,7 @@
     var vals=getSplitSetValues(), total=vals.reduce(function(a,b){ return a+b; }, 0);
     $("splitTotal").textContent="합계 "+total+EXES[currentDetailKey].unit;
     $("dIn1").value = total || "";
+    updateHeroGrade();
   }
   $("splitRows").addEventListener("input", function(e){
     if(e.target.classList.contains("split-set-input")) updateSplitTotal();
@@ -1625,10 +1704,14 @@
       $("splitRows").innerHTML="";
       $("dIn1").readOnly=false;
     }
+    updateHeroGrade();
   }
   function fillInputCard(presetDate){
     $("detailDate").value = presetDate || localStorage.getItem(LASTDATEKEY) || today();
     reloadInputForCurrentDate();
+    // start expanded only when re-editing an existing record — a fresh entry
+    // stays as just the hero number + save button
+    setMorePanelOpen(valueForDate(currentDetailKey, $("detailDate").value)!=null);
   }
   $("todayBtn").addEventListener("click", function(){
     $("detailDate").value=today();
@@ -1649,6 +1732,7 @@
   // on the stable wrapper instead of re-attaching after each rebuild.
   var inputStartedFired = false;
   $("detailInputWrap").addEventListener("input", function(){
+    updateHeroGrade();
     if(inputStartedFired) return;
     inputStartedFired = true;
     if(window.gtag) gtag("event", "input_started");
