@@ -477,9 +477,28 @@
   .modal-title{font-size:18px; font-weight:800; margin-bottom:14px}
   .modal-body{font-size:14px; line-height:1.9; color:var(--ink-dim); margin-bottom:18px}
   .modal-body b{color:var(--ink); font-weight:700}
-  .modal-body .step-group{margin-bottom:14px}
+  .modal-body .step-group{margin-bottom:18px}
   .modal-body .step-group:last-child{margin-bottom:0}
-  .modal-body .step-title{font-size:13px; font-weight:700; color:var(--tint); margin-bottom:4px}
+  .modal-body .step-title{font-size:13px; font-weight:700; color:var(--tint); margin-bottom:10px}
+  .modal-body .step-list{list-style:none; margin:0; padding:0}
+  .modal-body .step-item{display:flex; align-items:flex-start; gap:10px; margin-bottom:12px}
+  .modal-body .step-item:last-child{margin-bottom:0}
+  .modal-body .step-num{
+    flex:0 0 auto; width:20px; height:20px; border-radius:50%; margin-top:1px;
+    background:var(--tint); color:#fff; font-size:11px; font-weight:800;
+    display:grid; place-items:center; line-height:1;
+  }
+  .modal-body .step-text{flex:1; min-width:0; padding-top:1px}
+  .modal-body .link-copy-row{
+    display:flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--line);
+    border-radius:10px; padding:8px 10px; margin-top:8px;
+  }
+  .modal-body .link-url{flex:1; min-width:0; font-size:12px; color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:inherit}
+  .modal-body .link-copy-btn{
+    flex:0 0 auto; background:var(--tint); color:#fff; border:0; border-radius:8px;
+    padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .modal-body .link-copy-btn:active{opacity:.7}
 
   /* ---- calendar ---- */
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:14px}
@@ -2213,13 +2232,40 @@
   var isAndroid=/Android/.test(ua);
   var isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
 
+  var SITE_URL="https://smino04.github.io/tgjs/";
+  function linkCopyRow(){
+    return '<div class="link-copy-row"><span class="link-url">'+SITE_URL+'</span><button type="button" class="link-copy-btn">복사</button></div>';
+  }
   function a2hsContent(){
-    var ios='<div class="step-group"><div class="step-title">아이폰 (Safari)</div>하단 공유 버튼 <b>⬆️</b>를 탭하고<br><b>"홈 화면에 추가"</b>를 선택한 뒤 <b>추가</b>를 누르세요.</div>';
-    var android='<div class="step-group"><div class="step-title">갤럭시 / 안드로이드 (Chrome)</div>우측 상단 점 3개 메뉴 <b>⋮</b>를 탭하고<br><b>"홈 화면에 추가"</b> 또는 <b>"앱 설치"</b>를 선택하세요.</div>';
+    var ios=
+      '<div class="step-group"><div class="step-title">아이폰 (Safari)</div>'
+      +'<ol class="step-list">'
+        +'<li class="step-item"><span class="step-num">1</span><span class="step-text">Safari 앱을 열고 주소창에 아래 링크를 붙여넣어 접속하세요'+linkCopyRow()+'</span></li>'
+        +'<li class="step-item"><span class="step-num">2</span><span class="step-text">하단 공유 버튼 <b>⬆️</b>를 탭하세요</span></li>'
+        +'<li class="step-item"><span class="step-num">3</span><span class="step-text"><b>"홈 화면에 추가"</b>를 선택하세요</span></li>'
+        +'<li class="step-item"><span class="step-num">4</span><span class="step-text">오른쪽 위 <b>추가</b>를 누르면 완료예요</span></li>'
+      +'</ol></div>';
+    var android=
+      '<div class="step-group"><div class="step-title">갤럭시 / 안드로이드 (Chrome)</div>'
+      +'<ol class="step-list">'
+        +'<li class="step-item"><span class="step-num">1</span><span class="step-text">Chrome 앱을 열고 주소창에 아래 링크를 붙여넣어 접속하세요'+linkCopyRow()+'</span></li>'
+        +'<li class="step-item"><span class="step-num">2</span><span class="step-text">우측 상단 점 3개 메뉴 <b>⋮</b>를 탭하세요</span></li>'
+        +'<li class="step-item"><span class="step-num">3</span><span class="step-text"><b>"홈 화면에 추가"</b> 또는 <b>"앱 설치"</b>를 선택하세요</span></li>'
+      +'</ol></div>';
     if(isIOS) return ios;
     if(isAndroid) return android;
     return ios+android;
   }
+  $("a2hsBody").addEventListener("click", function(e){
+    if(!e.target.classList.contains("link-copy-btn")) return;
+    var done = function(){ showToast("링크를 복사했어요 ✓"); };
+    var fail = function(){ showToast("복사에 실패했어요"); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(SITE_URL).then(done).catch(fail);
+    }else{
+      fail();
+    }
+  });
   function openA2HS(){
     $("a2hsBody").innerHTML=a2hsContent();
     openOverlay("a2hsBackdrop");
