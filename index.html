@@ -1342,13 +1342,15 @@
       if(done) doneCount++;
       var gr = done ? gradeOf(key,val) : null;
       var gap = done ? nextGradeGapText(key, val) : null;
+      var sugg = done ? null : suggestGoal(key);
+      var suggText = sugg!=null ? "🎯 오늘 목표 "+(ex.isTime?fmtRun(sugg):sugg+ex.unit) : "탭해서 오늘 기록 입력";
       return '<button class="ex-card today-card'+(done?' done':'')+(gr===4?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
           +'<div class="ex-body"><div class="ex-name">'+exName(key)+'</div>'
           +(done
             ? '<div class="row-desc">'+(ex.isTime?fmtRun(val):val+ex.unit)+(gap?' · 다음 등급까지 '+gap:'')+'</div>'
-            : '<div class="row-desc" style="color:var(--tint); font-weight:600">탭해서 오늘 기록 입력</div>')
+            : '<div class="row-desc" style="color:var(--tint); font-weight:600">'+suggText+'</div>')
           +'</div>'
           +(done ? gradePill(gr) : '<div class="ex-chev">›</div>')
         +'</div>'
@@ -1742,9 +1744,7 @@
   function fillInputCard(presetDate){
     $("detailDate").value = presetDate || localStorage.getItem(LASTDATEKEY) || today();
     reloadInputForCurrentDate();
-    // start expanded only when re-editing an existing record — a fresh entry
-    // stays as just the hero number + save button
-    setMorePanelOpen(valueForDate(currentDetailKey, $("detailDate").value)!=null);
+    setMorePanelOpen(false); // always start collapsed on a fresh visit to this screen
   }
   $("todayBtn").addEventListener("click", function(){
     $("detailDate").value=today();
