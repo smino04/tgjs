@@ -1362,7 +1362,7 @@
       var gr = done ? gradeOf(key,val) : null;
       var gap = done ? nextGradeGapText(key, val) : null;
       var sugg = done ? null : suggestGoal(key);
-      var suggText = sugg!=null ? "🎯 오늘 목표 "+(ex.isTime?fmtRun(sugg):sugg+ex.unit) : "탭해서 오늘 기록 입력";
+      var suggText = sugg!=null ? "🎯 오늘 갯수 제안 "+(ex.isTime?fmtRun(sugg):sugg+ex.unit) : "탭해서 오늘 기록 입력";
       return '<button class="ex-card today-card'+(done?' done':'')+(gr===4?' at-goal':'')+'" data-ex="'+key+'">'
         +'<div class="ex-card-top">'
           +'<div class="ex-icon">'+ex.emoji+'</div>'
@@ -1616,7 +1616,7 @@
       var sugg=suggestGoal(key);
       if(sugg!=null){
         var ex=EXES[key], suggText = ex.isTime ? fmtRun(sugg) : sugg+ex.unit;
-        row.innerHTML='<button type="button" class="goal-suggest-btn">🎯 오늘 목표 '+suggText+' 어때요?</button>';
+        row.innerHTML='<button type="button" class="goal-suggest-btn">🎯 오늘 갯수 제안 '+suggText+' 어때요?</button>';
       }else{
         row.innerHTML='<span class="hero-grade-hint">숫자를 입력하면 바로 등급이 떠요</span>';
       }
