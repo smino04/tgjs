@@ -326,6 +326,11 @@
   .hero-field .colon{font-size:36px}
   .hero-grade-row{display:flex; align-items:center; justify-content:center; gap:6px; min-height:24px; margin:2px 0 14px}
   .hero-grade-hint{font-size:12px; color:var(--ink-faint)}
+  .goal-suggest-btn{
+    background:var(--tint-bg); color:var(--tint); border:0; border-radius:999px;
+    padding:6px 14px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer;
+  }
+  .goal-suggest-btn:active{opacity:.6}
   .more-toggle-btn{
     display:block; width:100%; text-align:center; margin-top:10px;
     background:none; border:0; color:var(--ink-faint); font-size:12.5px; font-weight:600;
@@ -1557,6 +1562,28 @@
     return parseInt($("dIn1").value,10);
   }
 
+  // ---- next-workout goal suggestion: a small nudge past the last recorded
+  // value (+2 reps, or 5s faster), shown before typing anything so there's
+  // a concrete number to aim for instead of a blank field ----
+  function suggestGoal(key){
+    var ex=EXES[key], rec=latestValue(key);
+    if(!rec || typeof rec[key]!=="number") return null;
+    return ex.isTime ? Math.max(0, rec[key]-5) : rec[key]+2;
+  }
+  $("heroGradeRow").addEventListener("click", function(e){
+    if(!e.target.classList.contains("goal-suggest-btn")) return;
+    var sugg=suggestGoal(currentDetailKey);
+    if(sugg==null || $("dIn1").readOnly) return;
+    var ex=EXES[currentDetailKey];
+    if(ex.isTime){
+      $("dIn1").value=Math.floor(sugg/60);
+      $("dIn2").value=sugg%60;
+    }else{
+      $("dIn1").value=sugg;
+    }
+    updateHeroGrade();
+  });
+
   // ---- hero stepper: tap +/- to nudge the value (±1 for reps, ±5s for the
   // run), with the grade pill updating live so entering a number feels less
   // like filling out a form and more like watching a number climb ----
@@ -1565,7 +1592,13 @@
     if(!key) return;
     var val=readInputValue(key);
     if(isNaN(val) || val<=0){
-      row.innerHTML='<span class="hero-grade-hint">숫자를 입력하면 바로 등급이 떠요</span>';
+      var sugg=suggestGoal(key);
+      if(sugg!=null){
+        var ex=EXES[key], suggText = ex.isTime ? fmtRun(sugg) : sugg+ex.unit;
+        row.innerHTML='<button type="button" class="goal-suggest-btn">🎯 오늘 목표 '+suggText+' 어때요?</button>';
+      }else{
+        row.innerHTML='<span class="hero-grade-hint">숫자를 입력하면 바로 등급이 떠요</span>';
+      }
       return;
     }
     var gr=gradeOf(key,val);
